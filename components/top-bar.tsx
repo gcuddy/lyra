@@ -1,6 +1,8 @@
+import { useSearch } from "@/atoms/library";
 import { Rewind, Play, FastForward } from "lucide-react";
 
 export default function TopBar() {
+  const [search, setSearch] = useSearch();
   return (
     <div className="flex flex-row justify-between gap-2 items-center w-full h-16 bg-gray-800">
       <div className="flex flex-row items-center">
@@ -20,7 +22,14 @@ export default function TopBar() {
       </div>
       <div>
         {/* serach bar */}
-        <input type="text" className="pointer-events-auto" />
+        <input
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+          type="text"
+          className="pointer-events-auto select-text appearance-none bg-transparent border outline-none"
+        />
       </div>
     </div>
   );

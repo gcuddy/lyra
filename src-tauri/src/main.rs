@@ -1,18 +1,21 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use tauri::{api, App, CustomMenuItem, FsScope, Manager, Menu, MenuItem, Submenu};
+use bson::Document;
+use nanoid::nanoid;
+use rayon::prelude::*;
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
-use symphonia_metadata::id3v2;
-
-use serde::ser::{Deserialize, Serialize};
-use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
-use symphonia::core::errors::Error;
-use symphonia::core::formats::FormatOptions;
-use symphonia::core::io::MediaSourceStream;
-use symphonia::core::meta::{MetadataOptions, MetadataReader};
-use symphonia::core::probe::Hint;
+// use serde::ser::{Deserialize, Serialize};
+// use symphonia_metadata::id3v2;
+// use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
+// use symphonia::core::errors::Error;
+// use symphonia::core::formats::FormatOptions;
+// use symphonia::core::io::MediaSourceStream;
+// use symphonia::core::meta::{MetadataOptions, MetadataReader};
+// use symphonia::core::probe::Hint;
 
 use audiotags::{Album, Tag};
+use logging_timer::{stime, time};
 
 fn main() {
     // build menu (move into a function)
@@ -64,6 +67,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![greet])
         .invoke_handler(tauri::generate_handler![read_music_file])
+        .invoke_handler(tauri::generate_handler![process_music_files])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -74,64 +78,84 @@ fn greet(name: &str) -> String {
 }
 
 #[derive(serde::Serialize)]
-struct Song<'a> {
-    title: &'a str,
-    artist: &'a str,
-    album: Album,
+struct Song {
+    id: String,
+    title: String,
+    artist: String,
+    album_artist: String,
+    album_title: String,
+    album_art: Option<Vec<u8>>,
     year: i32,
 }
+// struct Song<'a> {
+//     title: &'a str,
+//     artist: &'a str,
+//     // no idea if this is best way to do this lol
+//     album_title: &'a str,
+//     album_artist: &'a str,
+//     album_art: Vec<u8>,
+//     year: i32,
+// }
 
+// impl serde::Serialize for Song<'_> {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::ser::Serializer,
+//     {
+//         wrapper.serialize(serializer)
+//     }
+// }
+
+#[time]
 #[tauri::command]
-fn read_music_file(path: &str) -> Song<'_> {
+async fn read_music_file(path: &str) -> Song {
     // println!("path: {:?}", path);
 
-    let mut tag = Tag::new().read_from_path(path).unwrap();
+    let tag = Tag::new().read_from_path(path).unwrap();
 
-    let album = tag.album();
+    let album = tag.album().unwrap();
     let artist = tag.artist();
     let title = tag.title();
     let year = tag.year();
 
+    let album_artist = album.artist.unwrap_or_default().to_string();
+    let album_title = album.title.to_string();
+    let id = nanoid!();
+    // let album_art = match album.cover {
+    //     Some(cover) => Some(cover.data.to_vec()),
+    //     None => None,
+    // };
+    // album.as_ref()
     let song = Song {
-        title: title.unwrap(),
-        artist: artist.unwrap(),
-        album: album.unwrap(),
+        id,
+        title: title.unwrap_or_default().to_string(),
+        artist: artist.unwrap_or_default().to_string(),
+        album_artist,
+        album_title,
+        album_art: None,
+        // album_art,
         year: year.unwrap(),
     };
 
-    song
+    // event.window().emit("fileProcessed", song).unwrap();
 
-    // let src = std::fs::File::open(path).expect("failed to open media");
+    return song;
+}
 
-    // let mss = MediaSourceStream::new(Box::new(src), Default::default());
-
-    // // Create a probe hint using the file's extension. [Optional]
-    // let mut hint = Hint::new();
-    // hint.with_extension("flac");
-
-    // let meta_opts: MetadataOptions = Default::default();
-    // let fmt_opts: FormatOptions = Default::default();
-
-    // // Probe the media source.
-    // let probed = symphonia::default::get_probe()
-    //     .format(&hint, mss, &fmt_opts, &meta_opts)
-    //     .expect("unsupported format");
-
-    // // Get the instantiated format reader.
-    // let mut format = probed.format;
-    // // While there is newer metadata.
-    // while !format.metadata().is_latest() {
-    //     // Pop the old hexad of the metadata queue.
-    //     format.metadata().pop();
-
-    //     if let Some(rev) = format.metadata().current() {
-    //         // Consume the new metadata at the head of the metadata queue.
-    //         println!("metadata: {:?}", rev);
-    //         let reader = id3v2::Id3v2Reader;
-
-    //         reader.read_all(format, )
-    //         id3v2::read_id3v2(format, format.metadata());
-    //     }
-    // }
-    // format.metadata()
+#[tauri::command]
+fn process_music_files(paths: Vec<&str>) -> Vec<Song> {
+    let batch_size = 100; // Experiment with different batch sizes
+    paths
+        .chunks(batch_size)
+        .flat_map(|batch| {
+            batch
+                .into_par_iter()
+                .map(|&path| read_music_file(path))
+                .collect::<Vec<_>>()
+        })
+        .collect()
+    // paths
+    //     .par_iter()
+    //     .map(|path| read_music_file(path))
+    //     .collect()
 }

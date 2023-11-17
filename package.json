@@ -9,11 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.10.7",
+    "@tanstack/react-virtual": "^3.0.0-alpha.0",
     "@tauri-apps/api": "^1.5.1",
     "immer": "^10.0.3",
     "jotai": "^2.5.1",
     "jotai-immer": "^0.2.0",
     "lucide-react": "^0.292.0",
+    "million": "latest",
+    "music-metadata-browser": "^2.5.10",
     "next": "14.0.2",
     "react": "^18",
     "react-dom": "^18",
