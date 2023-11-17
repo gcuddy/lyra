@@ -12,12 +12,14 @@ import { useEffect, useState } from "react";
 import type { WebviewWindow } from "@tauri-apps/api/window";
 import { Store } from "tauri-plugin-store-api";
 import { useDirectoryPath } from "@/atoms/paths";
+import { useMainScrollRef } from "@/atoms/refs";
 
 const inter = Inter({ subsets: ["latin"] });
 export default function App({ Component, pageProps }: AppProps) {
   // could maybe move this logic into library component
   const [appWindow, setAppWindow] = useState<WebviewWindow>();
   const [isAppWindowSetup, setIsAppWindowSetup] = useState<boolean>(false);
+  const [mainScrollRef, setMainScrollRef] = useMainScrollRef();
 
   const [directoryListener, setDirectoryListener] =
     useState<Promise<() => void>>();
@@ -72,10 +74,10 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [appWindow]);
   return (
     <main
-      className={`flex select-none pointer-events-none min-h-screen  flex-col items-center justify-between ${inter.className}`}
+      className={`flex select-none pointer-events-none min-h-screen overflow-hidden h-16 flex-col items-center justify-between ${inter.className}`}
     >
       <TopBar />
-      <div className="grid grid-cols-5 grow h-full w-full">
+      <div className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full">
         <div className="flex flex-col basis-1/4 max-w-xs">
           <div className="bg-gray-600 items-center justify-center text-center">
             Source
@@ -84,7 +86,10 @@ export default function App({ Component, pageProps }: AppProps) {
             <SourceList />
           </div>
         </div>
-        <div className="flex col-span-3 lg:col-span-4 flex-col h-full grow">
+        <div
+          ref={setMainScrollRef}
+          className="flex col-span-3 lg:col-span-4 flex-col h-full grow"
+        >
           <Component {...pageProps} />
         </div>
       </div>

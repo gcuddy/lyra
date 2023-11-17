@@ -4,7 +4,7 @@ import { Rewind, Play, FastForward } from "lucide-react";
 export default function TopBar() {
   const [search, setSearch] = useSearch();
   return (
-    <div className="flex flex-row justify-between gap-2 items-center w-full h-16 bg-gray-800">
+    <div className="flex sticky top-0 flex-row justify-between gap-2 items-center w-full h-16 bg-gray-800">
       <div className="flex flex-row items-center">
         <button className="flex flex-row items-center justify-center h-16 w-16">
           <Rewind />

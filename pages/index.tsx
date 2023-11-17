@@ -10,17 +10,17 @@ import { useEffect, useState } from "react";
 import type { WebviewWindow } from "@tauri-apps/api/window";
 import { Store } from "tauri-plugin-store-api";
 import { useDirectoryPath } from "@/atoms/paths";
+import { useMainScrollRef } from "@/atoms/refs";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const [directoryPath, setDirectoryPath] = useDirectoryPath();
-
+  const [mainScrollRef] = useMainScrollRef();
   return (
     <>
-      {directoryPath}
       {directoryPath ? (
-        <Library path={directoryPath} />
+        <Library scrollElement={mainScrollRef} path={directoryPath} />
       ) : (
         <>
           <div>Please select a directory</div>
