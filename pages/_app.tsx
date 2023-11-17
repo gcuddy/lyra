@@ -74,7 +74,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [appWindow]);
   return (
     <main
-      className={`flex select-none pointer-events-none min-h-screen overflow-hidden h-16 flex-col items-center justify-between ${inter.className}`}
+      className={`flex select-none pointer-events-none min-h-screen  h-16 flex-col items-center justify-between ${inter.className}`}
     >
       <TopBar />
       <div className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full">
@@ -86,12 +86,12 @@ export default function App({ Component, pageProps }: AppProps) {
             <SourceList />
           </div>
         </div>
-        <div
+        <Component {...pageProps} />
+        {/* <div
           ref={setMainScrollRef}
-          className="flex col-span-3 lg:col-span-4 flex-col h-full grow"
+          className="flex col-span-3 lg:col-span-4 flex-col pointer-events-auto"
         >
-          <Component {...pageProps} />
-        </div>
+        </div> */}
       </div>
     </main>
   );

@@ -3,7 +3,12 @@ import { BaseDirectory, readDir, type FileEntry } from "@tauri-apps/api/fs";
 import { convertFileSrc, invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import * as mm from "music-metadata-browser";
-import { useFilteredLibrary, useLibrary } from "@/atoms/library";
+import {
+  useFilteredLibrary,
+  useLibrary,
+  useLoadedSong,
+  useSelectedSong,
+} from "@/atoms/library";
 import { For } from "million/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -27,56 +32,22 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const [musicFiles, setMusicFiles] = usePaths();
   const [library] = useFilteredLibrary();
   const [, setLibrary] = useLibrary();
-  const parentRef = useRef<HTMLTableElement>(null);
-
-  const [sorting, setSorting] = useState<SortingState>([]);
-
-  const columns = useMemo<ColumnDef<RawSong>[]>(
-    () => [
-      {
-        accessorKey: "title",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "artist",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "album",
-        cell: (info) => info.getValue(),
-      },
-    ],
-    []
-  );
-
-  const table = useReactTable({
-    data: library,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
-  });
-
-  const { rows } = table.getRowModel();
-
-  const [scrollMargin, setScrollMargin] = useState(0);
-  const updateMargin = useCallback((node: HTMLDivElement | null) => {
-    setScrollMargin(node?.offsetTop ?? 0);
-  }, []);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
-    count: rows?.length,
-    getScrollElement: () => scrollElement ?? parentRef.current,
+    count: library?.length,
+    getScrollElement: () => parentRef.current,
     estimateSize: () => 35,
     getItemKey: (index) => library[index]?.id,
     overscan: 10,
     paddingStart: 16,
-    scrollMargin,
+    //   scrollMargin,
   });
+  //   const rowVirtualizer = useVirtualizer({
+  //     count: 10000,
+  //     getScrollElement: () => parentRef.current,
+  //     estimateSize: () => 35,
+  //   });
 
   //   const { virtualItems: virtualRows, totalSize } = rowVirtualizer;
 
@@ -127,7 +98,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
         .map((file) => mm.fetchFromUrl(convertFileSrc(file)))
     );
     rowVirtualizer.measure();
-    table.reset();
+    // table.reset();
     // const metadata = await mm.fetchFromUrl(convertFileSrc(musicFiles[0]));
     console.timeEnd("metadata");
     console.log({ metadata });
@@ -139,6 +110,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     });
     console.log({ dir });
     const files = parseMusicFiles(dir);
+    console.log({ files });
     setMusicFiles(files);
     fn_parse();
     // const metadata = await Promise.all(
@@ -158,6 +130,44 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
   return (
     <>
+      {/* {JSON.stringify(library)} */}
+      <div
+        ref={parentRef}
+        className="col-span-4"
+        style={{
+          height: `100%`,
+          width: "100%",
+          overflow: "auto",
+          pointerEvents: "auto",
+        }}
+      >
+        {library.length} songs
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          <For each={rowVirtualizer.getVirtualItems()} as="div">
+            {(virtualItem) => (
+              <div
+                key={virtualItem.key}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                <LibraryItem song={library[virtualItem.index]} />
+              </div>
+            )}
+          </For>
+        </div>
+      </div>
       {/* <button
         onClick={() => {
           readDirectory();
@@ -185,94 +195,162 @@ export default function Library({ path, scrollElement }: LibraryProps) {
         You have {musicFiles.length} music files in {path}
       </span> */}
       {/* {JSON.stringify(library)} */}
-      <table
-        ref={parentRef}
-        style={{
-          height: "100px",
-          overflow: "auto",
-          //   flex: "1",
-          position: "relative",
-          pointerEvents: "auto",
-        }}
-      >
-        <thead className="sticky top-0">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    style={{ width: header.getSize() }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div
-                        {...{
-                          className: header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : "",
-                          onClick: header.column.getToggleSortingHandler(),
-                        }}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {{
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <For
-          each={rowVirtualizer.getVirtualItems()}
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
-          as="tbody"
-        >
-          {(virtualItem) => {
-            const row = rows[virtualItem.index];
-            return (
-              <tr
-                key={row.id}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${
-                    virtualItem.start - rowVirtualizer.options.scrollMargin
-                  }px)`,
-                }}
-              >
-                {/* {library[virtualItem.index]?.title} */}
-                <For each={row.getVisibleCells()} as="div">
-                  {(cell) => {
-                    return (
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    );
-                  }}
-                </For>
-              </tr>
-            );
-          }}
-        </For>
-      </table>
     </>
+  );
+}
+
+function LibraryItem({ song }: { song: RawSong }) {
+  const [selectedSong, setSelectedSong] = useSelectedSong();
+  const [, setLoadedSong] = useLoadedSong();
+  return (
+    <>
+      <div
+        onClick={() => {
+          setSelectedSong(song);
+        }}
+        onDoubleClick={() => {
+          setLoadedSong(song);
+        }}
+        className={`grid grid-cols-3 select-none cursor-default truncate ${
+          selectedSong?.id === song?.id ? "bg-gray-600" : ""
+        }`}
+      >
+        <span className="truncate">{song?.title}</span>
+        <span className="truncate">{song.artist}</span>
+        <span className="truncate">{song.album_title}</span>
+      </div>
+    </>
+  );
+}
+
+function Table({ data = [] }: { data: RawSong[] }) {
+  const parentRef = useRef<HTMLTableElement>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const columns = useMemo<ColumnDef<RawSong>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "artist",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "album",
+        cell: (info) => info.getValue(),
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    debugTable: true,
+  });
+
+  const { rows } = table.getRowModel();
+
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const updateMargin = useCallback((node: HTMLDivElement | null) => {
+    setScrollMargin(node?.offsetTop ?? 0);
+  }, []);
+
+  return (
+    <table
+      ref={parentRef}
+      style={{
+        height: "100px",
+        overflow: "auto",
+        //   flex: "1",
+        position: "relative",
+        pointerEvents: "auto",
+      }}
+    >
+      <thead className="sticky top-0">
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              return (
+                <th
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  style={{ width: header.getSize() }}
+                >
+                  {header.isPlaceholder ? null : (
+                    <div
+                      {...{
+                        className: header.column.getCanSort()
+                          ? "cursor-pointer select-none"
+                          : "",
+                        onClick: header.column.getToggleSortingHandler(),
+                      }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {{
+                        asc: " 🔼",
+                        desc: " 🔽",
+                      }[header.column.getIsSorted() as string] ?? null}
+                    </div>
+                  )}
+                </th>
+              );
+            })}
+          </tr>
+        ))}
+      </thead>
+      <For
+        each={rows}
+        //   style={{
+        //     height: `${rowVirtualizer.getTotalSize()}px`,
+        //     width: "100%",
+        //     position: "relative",
+        //   }}
+        as="tbody"
+      >
+        {(row) => {
+          return (
+            <tr
+              key={row.id}
+              // style={{
+              //   position: "absolute",
+              //   top: 0,
+              //   left: 0,
+              //   width: "100%",
+              //   height: `${virtualItem.size}px`,
+              //   transform: `translateY(${
+              //     virtualItem.start - rowVirtualizer.options.scrollMargin
+              //   }px)`,
+              // }}
+            >
+              {/* {library[virtualItem.index]?.title} */}
+              <For each={row.getVisibleCells()} as="div">
+                {(cell) => {
+                  return (
+                    <td key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  );
+                }}
+              </For>
+            </tr>
+          );
+        }}
+      </For>
+    </table>
   );
 }

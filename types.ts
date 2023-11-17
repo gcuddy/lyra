@@ -7,4 +7,5 @@ type RawSong = {
   album_title: string;
   album_art?: number[];
   year: number;
+  path: string;
 };
