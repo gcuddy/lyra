@@ -106,6 +106,7 @@ dependencies = [
  "clap",
  "cpal",
  "lazy_static",
+ "lofty",
  "logging_timer",
  "nanoid",
  "rayon",
@@ -1819,6 +1820,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "lofty"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7500ea55c48cf37799f96ed0104c5082b53763f7e59f4501e68b219ab555ed44"
+dependencies = [
+ "base64 0.21.5",
+ "byteorder",
+ "flate2",
+ "lofty_attr",
+ "log",
+ "ogg_pager",
+ "once_cell",
+ "paste",
+]
+
+[[package]]
+name = "lofty_attr"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "764b60e1ddd07e5665a6a17636a95cd7d8f3b86c73503a69c32979d05f72f3cf"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
+
+[[package]]
 name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2249,6 +2277,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ogg_pager"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d218a406e5de88e1c492d0162d569916f7436efe851ba5cc40a4bf4fa97cb40"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2338,6 +2375,12 @@ dependencies = [
  "smallvec",
  "windows-targets",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
 name = "peeking_take_while"

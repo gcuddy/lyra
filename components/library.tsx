@@ -29,6 +29,7 @@ interface LibraryProps {
 export default function Library({ path, scrollElement }: LibraryProps) {
   // read directory
   const [fileEntries, setFileEntries] = useState<FileEntry[]>();
+  const [isParsing, setIsParsing] = useState(false);
   const [musicFiles, setMusicFiles] = usePaths();
   const [library] = useFilteredLibrary();
   const [, setLibrary] = useLibrary();
@@ -77,31 +78,20 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   }
 
   async function fn_parse() {
-    console.time("read_music_file");
+    if (isParsing) return;
+    console.time("read_music_files");
+    setIsParsing(true);
     console.log("files", musicFiles.length);
     const metadata = await invoke<RawSong[]>("process_music_files", {
       paths: musicFiles,
     });
     console.log({ metadata });
-    setLibrary(metadata);
+    if (metadata?.length) {
+      setLibrary(metadata);
+    }
     console.log("done");
-    console.timeEnd("read_music_file");
-  }
-
-  async function js_parse() {
-    console.time("read_music_file");
-    console.log("files", musicFiles.length);
-    console.time("metadata");
-    const metadata = await Promise.all(
-      musicFiles
-        .slice(0, 50)
-        .map((file) => mm.fetchFromUrl(convertFileSrc(file)))
-    );
-    rowVirtualizer.measure();
-    // table.reset();
-    // const metadata = await mm.fetchFromUrl(convertFileSrc(musicFiles[0]));
-    console.timeEnd("metadata");
-    console.log({ metadata });
+    console.timeEnd("read_music_files");
+    setIsParsing(false);
   }
 
   async function readDirectory() {
@@ -128,12 +118,16 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     readDirectory();
   }, [path]);
 
+  if (isParsing) {
+    return <div>Reading music files...</div>;
+  }
+
   return (
     <>
-      {/* {JSON.stringify(library)} */}
+      {!!isParsing && "Parsing"}
       <div
         ref={parentRef}
-        className="col-span-4"
+        className="col-span-4 bg-white dark:bg-gray-950"
         style={{
           height: `100%`,
           width: "100%",
@@ -153,6 +147,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
             {(virtualItem) => (
               <div
                 key={virtualItem.key}
+                className="flex items-center"
                 style={{
                   position: "absolute",
                   top: 0,
@@ -211,8 +206,8 @@ function LibraryItem({ song }: { song: RawSong }) {
         onDoubleClick={() => {
           setLoadedSong(song);
         }}
-        className={`grid grid-cols-3 select-none cursor-default truncate ${
-          selectedSong?.id === song?.id ? "bg-gray-600" : ""
+        className={`h-full grow grid grid-cols-3 items-center select-none cursor-default truncate ${
+          selectedSong?.id === song?.id ? "bg-blue-500 text-white" : ""
         }`}
       >
         <span className="truncate">{song?.title}</span>

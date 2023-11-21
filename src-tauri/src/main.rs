@@ -8,7 +8,7 @@ use std::path::Path;
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
 // use serde::ser::{Deserialize, Serialize};
-use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL, FinalizeResult};
+use symphonia::core::codecs::{DecoderOptions, FinalizeResult, CODEC_TYPE_NULL};
 use symphonia::core::formats::{FormatOptions, FormatReader, Track};
 use symphonia::core::io::MediaSourceStream;
 // use symphonia::core::errors::{Error, Result};
@@ -24,12 +24,12 @@ use logging_timer::{stime, time};
 // #[cfg(not(target_os = "linux"))]
 // mod resampler;
 
-
 fn main() {
     // build menu (move into a function)
     let open_directory = CustomMenuItem::new("openDirectory".to_string(), "Open Directory");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let close = CustomMenuItem::new("close".to_string(), "Close");
+
     let submenu = Submenu::new(
         "File",
         Menu::new()
@@ -37,10 +37,18 @@ fn main() {
             .add_item(quit)
             .add_item(close),
     );
+
+    // TODO: toggle play/pause depending on state
+    let controls = Submenu::new(
+        "Controls",
+        Menu::new().add_item(CustomMenuItem::new("play".to_string(), "Play/Pause").accelerator("Space")),
+    );
+
     let menu = Menu::new()
         .add_native_item(MenuItem::Copy)
         .add_item(CustomMenuItem::new("hide", "Hide"))
-        .add_submenu(submenu);
+        .add_submenu(submenu)
+        .add_submenu(controls);
 
     // tauri_api
 
@@ -70,6 +78,9 @@ fn main() {
             }
             "close" => {
                 event.window().close().unwrap();
+            }
+            "play" => {
+                event.window().emit("play", 1).unwrap();
             }
             _ => {}
         })

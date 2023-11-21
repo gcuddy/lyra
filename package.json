@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slider": "^1.1.2",
     "@tanstack/react-table": "^8.10.7",
     "@tanstack/react-virtual": "^3.0.0-alpha.0",
     "@tauri-apps/api": "^1.5.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
     "immer": "^10.0.3",
     "jotai": "^2.5.1",
     "jotai-immer": "^0.2.0",
@@ -21,6 +24,9 @@
     "next": "14.0.2",
     "react": "^18",
     "react-dom": "^18",
+    "react-fast-marquee": "^1.6.2",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss-animate": "^1.0.7",
     "tauri-plugin-store-api": "https://github.com/tauri-apps/tauri-plugin-store#v1"
   },
   "devDependencies": {
