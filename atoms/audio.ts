@@ -3,6 +3,7 @@ import { atom, useAtom } from "jotai";
 export class AudioPlayer {
   audio?: HTMLAudioElement;
   initialized = false;
+  destroyFn?: Array<() => void>;
 
   constructor() {
     this.initialize();
@@ -70,3 +71,6 @@ const toggleAtom = atom(null, (get, set, arg: HTMLAudioElement) => {
     set(playAtom, arg);
   }
 });
+
+
+

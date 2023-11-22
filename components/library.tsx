@@ -7,6 +7,7 @@ import {
   useFilteredLibrary,
   useLibrary,
   useLoadedSong,
+  usePlaying,
   useSelectedSong,
 } from "@/atoms/library";
 import { For } from "million/react";
@@ -20,6 +21,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { useAudioPlayer } from "@/atoms/audio";
 
 interface LibraryProps {
   path: string;
@@ -34,6 +36,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const [library] = useFilteredLibrary();
   const [, setLibrary] = useLibrary();
   const parentRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = usePlaying();
+  const [audio] = useAudioPlayer();
 
   const rowVirtualizer = useVirtualizer({
     count: library?.length,

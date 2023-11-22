@@ -1,5 +1,10 @@
 import { AudioPlayer, useAudioPlayer } from "@/atoms/audio";
-import { useLoadedSong, usePlaying, useSearch } from "@/atoms/library";
+import {
+  useLibrary,
+  useLoadedSong,
+  usePlaying,
+  useSearch,
+} from "@/atoms/library";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import Marquee from "react-fast-marquee";
 
@@ -32,6 +37,7 @@ export default function TopBar() {
   const [loadedSong] = useLoadedSong();
   const [playing, setPlaying] = usePlaying();
   const [audio, setAudio] = useAudioPlayer();
+  const [library] = useLibrary();
 
   const [artistOrAlbum, setArtistOrAlbum] = useArtistOrAlbum();
 
@@ -40,9 +46,46 @@ export default function TopBar() {
     setArtistOrAlbum(artistOrAlbum === "artist" ? "album" : "artist");
   }
 
+  //   TODO: should these move into a hook?
+  function pause() {
+    audio?.audio?.pause();
+    setPlaying(false);
+  }
+
+  function play() {
+    audio?.audio?.play();
+    setPlaying(true);
+  }
+
+  //   TODO: ended
+  function ended() {
+    if (loadedSong && audio?.audio) {
+      const idx = library.findIndex((s) => s.id === loadedSong.id);
+      if (idx === -1) return;
+      const nextSong = library[idx + 1];
+      if (!nextSong) return;
+      const src = convertFileSrc(nextSong.path);
+      audio.audio.src = src;
+      play();
+    }
+  }
+
   useEffect(() => {
     const audio = new AudioPlayer();
     setAudio(audio);
+    if (audio?.audio) {
+      audio.audio.addEventListener("pause", pause);
+      audio.audio.addEventListener("play", play);
+      audio.audio.addEventListener("ended", ended);
+    }
+
+    return () => {
+      if (audio?.audio) {
+        audio.audio.removeEventListener("pause", pause);
+        audio.audio.removeEventListener("play", play);
+        audio.audio.removeEventListener("ended", ended);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -75,17 +118,17 @@ export default function TopBar() {
           <button
             onClick={() => {
               if (playing) {
-                audio.audio?.pause();
-                setPlaying(false);
+                pause();
                 return;
+              } else {
+                play();
               }
-              if (loadedSong && audio.audio) {
-                const src = convertFileSrc(loadedSong.path);
-                console.log({ src });
-                audio.audio.src = src;
-                audio.audio.play();
-                setPlaying(true);
-              }
+              //   if (loadedSong && audio.audio) {
+              //     const src = convertFileSrc(loadedSong.path);
+              //     audio.audio.src = src;
+              //     audio.audio.play();
+              //     setPlaying(true);
+              //   }
             }}
             className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400"
           >
