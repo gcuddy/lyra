@@ -22,6 +22,8 @@ import { Slider } from "./ui/slider";
 import { listen } from "@tauri-apps/api/event";
 import { atomWithStorage } from "jotai/utils";
 import { atom, useAtom } from "jotai";
+import { format } from "date-fns";
+import { Seeker } from "./ui/seeker";
 
 const artistOrAlbumAtom = atomWithStorage<"artist" | "album">(
   "artistOrAlbum",
@@ -36,10 +38,13 @@ const volumeAtom = atomWithStorage("volume", 1);
 
 export default function TopBar() {
   const [search, setSearch] = useSearch();
-  const [loadedSong] = useLoadedSong();
+  const [loadedSong, setLoadedSong] = useLoadedSong();
   const [playing, setPlaying] = usePlaying();
   const [audio, setAudio] = useAudioPlayer();
   const [library] = useLibrary();
+
+  const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const [artistOrAlbum, setArtistOrAlbum] = useArtistOrAlbum();
 
@@ -77,20 +82,30 @@ export default function TopBar() {
       if (idx === -1) return;
       const nextSong = library[idx + 1];
       if (!nextSong) return;
-      const src = convertFileSrc(nextSong.path);
-      audio.audio.src = src;
-      play();
+      setLoadedSong(nextSong);
+      //   const src = convertFileSrc(nextSong.path);
+      //   audio.audio.src = src;
+      //   play();
     }
   }
 
+  function loadmetadata() {
+    if (!audio?.audio) return;
+    setDuration(audio.audio.duration);
+  }
   useEffect(() => {
-    if (audio?.audio) return;
-    const _audio = new AudioPlayer();
-    setAudio(_audio);
+    if (!audio?.audio) {
+      const _audio = new AudioPlayer();
+      setAudio(_audio);
+    }
     if (audio?.audio) {
       audio.audio.addEventListener("pause", pause);
       audio.audio.addEventListener("play", play);
       audio.audio.addEventListener("ended", ended);
+      audio.audio.addEventListener("loadedmetadata", loadmetadata);
+      audio.audio.addEventListener("timeupdate", (e) => {
+        setTime(audio.audio?.currentTime ?? 0);
+      });
     }
 
     return () => {
@@ -98,6 +113,11 @@ export default function TopBar() {
         audio.audio.removeEventListener("pause", pause);
         audio.audio.removeEventListener("play", play);
         audio.audio.removeEventListener("ended", ended);
+        audio.audio.removeEventListener("loadedmetadata", loadmetadata);
+        audio.audio.removeEventListener("timeupdate", (e) => {
+          setTime(audio.audio?.currentTime ?? 0);
+        });
+        // audio?.audio.srcObject = null;
       }
     };
   }, []);
@@ -129,7 +149,7 @@ export default function TopBar() {
   if (!audio) return <div></div>;
 
   return (
-    <div className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 items-center w-full h-16 dark:bg-gray-800 px-4">
+    <div className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 border-b items-center w-full h-16 px-4">
       <div className="flex col-span-3 justify-center flex-row items-center pointer-events-auto gap-2">
         <div className="flex gap-2">
           <button className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400">
@@ -184,12 +204,39 @@ export default function TopBar() {
             // <Marquee speed={25}>
             // </Marquee>
             <div className="pointer-events-auto select-none cursor-default text-center flex flex-col text-sm items-center justify-center grow w-full">
-              <span>{loadedSong.title}</span>
-              <span onClick={toggleArtistOrAlbum}>
+              <span className="text-sm">{loadedSong.title}</span>
+              <span className="text-xs" onClick={toggleArtistOrAlbum}>
                 {artistOrAlbum === "artist"
                   ? loadedSong.artist
                   : loadedSong.album_title}
               </span>
+              <div className="flex grow w-full items-center gap-2 px-4">
+                <span className="text-xs tabular-nums">
+                  {format(time * 1000, "mm:ss")}
+                </span>
+                <Seeker
+                  className="w-max grow"
+                  min={0}
+                  step={1}
+                  value={[time]}
+                  onValueChange={(value) => {
+                    if (audio?.audio) {
+                      console.log({ value });
+                      console.log({
+                        currenttime: audio.audio.currentTime,
+                        duration: audio.audio.duration,
+                      });
+                      //   audio.audio.currentTime
+                      //   audio.audio.duration
+                      audio.audio.currentTime = value[0];
+                    }
+                  }}
+                  max={duration}
+                />
+                <span className="text-xs tabular-nums">
+                  {format(duration * 1000, "mm:ss")}
+                </span>
+              </div>
             </div>
           )}
         </div>
