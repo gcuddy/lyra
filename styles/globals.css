@@ -32,7 +32,7 @@
   --color-app-selected-item: var(--light-hue), 5%, 96%;
   --color-app-hover: var(--light-hue), 5%, 97%;
   --color-app-active: var(--light-hue), 5%, 87%;
-
+  --color-app-box: var(--light-hue), 5%, 98%;
 
   /* text */
   --color-ink: var(--light-hue), 5%, 20%;

@@ -30,6 +30,7 @@ const config: Config = {
           focus: alpha("--color-app-focus"),
           divider: alpha("--color-app-divider"),
           selected: alpha("--color-app-selected"),
+          box: alpha("--color-app-box"),
         },
         ink: {
           DEFAULT: alpha("--color-ink"),

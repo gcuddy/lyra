@@ -1,3 +1,5 @@
+import { CaretDown, CaretUp } from "@phosphor-icons/react";
+
 import { usePaths } from "@/atoms/paths";
 import { BaseDirectory, readDir, type FileEntry } from "@tauri-apps/api/fs";
 import { convertFileSrc, invoke } from "@tauri-apps/api/tauri";
@@ -35,6 +37,7 @@ import {
 import { useAudioPlayer } from "@/atoms/audio";
 import { useTable } from "@/view/table";
 import { useAtom } from "jotai";
+import clsx from "clsx";
 
 interface LibraryProps {
   path: string;
@@ -195,9 +198,12 @@ export default function Library({ path, scrollElement }: LibraryProps) {
           // when the inspector is toggled
           positionRecheckInterval={100}
         >
-          <div className="border-b backdrop-saturate-[1.2] backdrop-blur-lg bg-black/50 overflow-x-auto overscroll-x-none">
+          <div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
             {table.getHeaderGroups().map((headerGroup) => (
-              <div key={headerGroup.id} className="flex w-fit">
+              <div
+                key={headerGroup.id}
+                className="flex w-fit divide-x divide-app-line"
+              >
                 {headerGroup.headers.map((header, i) => {
                   const size = header.column.getSize();
 
@@ -207,14 +213,19 @@ export default function Library({ path, scrollElement }: LibraryProps) {
                     header.getContext()
                   );
 
+                  const firstSort = table.getState().sorting[0];
+
+                  const isActive = header.id === firstSort?.id;
+
+                  console.log({ isActive });
                   return (
                     <div key={header.id}>
                       {header.isPlaceholder ? null : (
-                        <div
+                        <button
                           style={{
                             width: size,
                           }}
-                          className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs"
+                          className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
                           onClick={() => {
                             // see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
                             table.setSorting(
@@ -228,9 +239,18 @@ export default function Library({ path, scrollElement }: LibraryProps) {
                           }}
                         >
                           <div className="truncate">
-                            <span>{cellContent}</span>
+                            <span className={clsx(isActive && "font-medium")}>
+                              {cellContent}
+                            </span>
                           </div>
-                        </div>
+                          {isActive ? (
+                            firstSort?.desc ? (
+                              <CaretDown className="shrink-0 text-ink-faint" />
+                            ) : (
+                              <CaretUp className="shrink-0 text-ink-faint" />
+                            )
+                          ) : null}
+                        </button>
                       )}
                     </div>
                   );

@@ -1,3 +1,4 @@
+import { XCircle } from "@phosphor-icons/react";
 import { AudioPlayer, useAudioPlayer } from "@/atoms/audio";
 import {
   useLibrary,
@@ -202,12 +203,12 @@ export default function TopBar() {
       </div>
       <div className="grow col-start-5 col-span-4 p-2 h-full">
         {/* this will hold current song */}
-        <div className="flex grow h-full border border-gray-400 rounded-lg">
+        <div className="flex grow h-14 border border-app-line bg-app-box/50 rounded-lg">
           {!!loadedSong && (
             // <Marquee speed={25}>
             // </Marquee>
-            <div className="pointer-events-auto select-none cursor-default text-center flex flex-col text-sm items-center justify-center grow w-full">
-              <span className="text-sm">{loadedSong.title}</span>
+            <div className="pointer-events-auto leading-3 select-none cursor-default text-center flex flex-col text-sm items-center justify-center grow w-full p-1">
+              <span className=" text-xs font-semibold">{loadedSong.title}</span>
               <span className="text-xs" onClick={toggleArtistOrAlbum}>
                 {artistOrAlbum === "artist"
                   ? loadedSong.artist
@@ -271,10 +272,23 @@ function SearchBar() {
         type="text"
         className="pointer-events-auto select-text pl-8 pr-6"
       />
-      <Shortcut
-        className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-70 group-focus-within:hidden"
-        chars={keybind([ModifierKeys.Control], ["F"])}
-      />
+      <div className="absolute flex flex-col items-center justify-center right-2 top-1/2 -translate-y-1/2  opacity-70 ">
+        {!!search ? (
+          <button
+            className="pointer-events-auto"
+            onClick={() => {
+              setSearch("");
+            }}
+          >
+            <XCircle />
+          </button>
+        ) : (
+          <Shortcut
+            className="group-focus-within:hidden pointer-events-none"
+            chars={keybind([ModifierKeys.Control], ["F"])}
+          />
+        )}
+      </div>
     </div>
   );
 }
