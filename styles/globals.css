@@ -21,7 +21,23 @@
 }
 
 .light {
+  /* main */
   --color-app: var(--light-hue), 5%, 100%;
+  --color-app-input: var(--light-hue), 5%, 100%;
+  --color-app-focus: var(--light-hue), 5%, 98%;
+  --color-app-line: var(--light-hue), 5%, 90%;
+  --color-app-button: var(--light-hue), 5%, 100%;
+  --color-app-divider: var(--light-hue), 5%, 80%;
+  --color-app-selected: var(--light-hue), 5%, 93%;
+  --color-app-selected-item: var(--light-hue), 5%, 96%;
+  --color-app-hover: var(--light-hue), 5%, 97%;
+  --color-app-active: var(--light-hue), 5%, 87%;
+
+
+  /* text */
+  --color-ink: var(--light-hue), 5%, 20%;
+  --color-ink-dull: var(--light-hue), 5%, 30%;
+  --color-ink-faint: var(--light-hue), 5%, 40%;
 
   /* accent */
   --color-accent: 208, 100%, 57%;

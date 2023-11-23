@@ -9,6 +9,9 @@ export const selectedSongAtom = atom<RawSong | null>(null);
 const loadedSongAtom = atom<RawSong | null>(null);
 const playingAtom = atom(false);
 
+
+
+
 export function useLibrary() {
   return [...useAtom(libraryAtom)] as const;
 }
@@ -71,6 +74,16 @@ const filteredLibraryAtom = atom((get) => {
       .includes(search.toLowerCase())
   );
   return filtered;
+});
+
+export const libraryCountAtom = atom((get) => {
+  const library = get(libraryAtom);
+  return library.length;
+});
+
+export const filteredLibraryCountAtom = atom((get) => {
+  const library = get(filteredLibraryAtom);
+  return library.length;
 });
 
 export function useFilteredLibrary() {

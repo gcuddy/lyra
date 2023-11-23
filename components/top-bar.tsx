@@ -17,13 +17,17 @@ import {
   Volume1,
   Volume2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Slider } from "./ui/slider";
 import { listen } from "@tauri-apps/api/event";
 import { atomWithStorage } from "jotai/utils";
 import { atom, useAtom } from "jotai";
 import { format } from "date-fns";
 import { Seeker } from "./ui/seeker";
+import { Input } from "./ui/input";
+import { Shortcut } from "./ui/shortcut";
+import { ModifierKeys, keybind, keybindForOs } from "@/lib/utils";
+import { useOperatingSystem } from "@/hooks/useOperatingSystem";
 
 const artistOrAlbumAtom = atomWithStorage<"artist" | "album">(
   "artistOrAlbum",
@@ -37,7 +41,6 @@ function useArtistOrAlbum() {
 const volumeAtom = atomWithStorage("volume", 1);
 
 export default function TopBar() {
-  const [search, setSearch] = useSearch();
   const [loadedSong, setLoadedSong] = useLoadedSong();
   const [playing, setPlaying] = usePlaying();
   const [audio, setAudio] = useAudioPlayer();
@@ -222,19 +225,56 @@ export default function TopBar() {
         </div>
       </div>
       <div className="col-span-2 col-end-12 justify-center flex items-center">
-        <div className="relative">
-          <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            placeholder="Search…"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-            type="text"
-            className="pointer-events-auto select-text pl-8 pr-6 appearance-none bg-transparent border outline-none border-gray-400 rounded-full p-2"
-          />
-        </div>
+        <SearchBar />
       </div>
+    </div>
+  );
+}
+
+function SearchBar() {
+  const os = useOperatingSystem();
+  const keybind = keybindForOs(os);
+  const [search, setSearch] = useSearch();
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    console.log("running audio listen");
+    const unlisten = listen("find", (e) => {
+      inputRef.current?.focus();
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, [inputRef]);
+
+  return (
+    <div className="relative group">
+      <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+      <Input
+        ref={inputRef}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            if (search) {
+              setSearch("");
+            } else {
+              inputRef.current?.blur();
+            }
+          }
+        }}
+        placeholder="Search…"
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+        }}
+        type="text"
+        className="pointer-events-auto select-text pl-8 pr-6"
+      />
+      <Shortcut
+        className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-70 group-focus-within:hidden"
+        chars={keybind([ModifierKeys.Control], ["F"])}
+      />
     </div>
   );
 }

@@ -44,10 +44,24 @@ fn main() {
             .add_item(CustomMenuItem::new("play".to_string(), "Play/Pause").accelerator("Space")),
     );
 
+    let edit_submenu = Submenu::new(
+        "Edit",
+        Menu::new()
+            .add_native_item(MenuItem::Undo)
+            .add_native_item(MenuItem::Redo)
+            .add_native_item(MenuItem::Cut)
+            .add_native_item(MenuItem::Copy)
+            .add_native_item(MenuItem::Paste)
+            .add_native_item(MenuItem::SelectAll)
+            .add_item(CustomMenuItem::new("find", "Find").accelerator("CmdOrCtrl+F"))
+            ,
+    );
+
     let menu = Menu::new()
         .add_native_item(MenuItem::Copy)
         .add_item(CustomMenuItem::new("hide", "Hide"))
         .add_submenu(submenu)
+        .add_submenu(edit_submenu)
         .add_submenu(controls);
 
     tauri::Builder::default()
@@ -66,6 +80,12 @@ fn main() {
             }
             "play" => {
                 event.window().emit("play", 1).unwrap();
+            }
+            "hide" => {
+                event.window().hide().unwrap();
+            }
+            "find" => {
+                event.window().emit("find", 1).unwrap();
             }
             _ => {}
         })

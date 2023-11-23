@@ -25,6 +25,16 @@ const config: Config = {
         },
         app: {
           DEFAULT: alpha("--color-app"),
+          input: alpha("--color-app-input"),
+          line: alpha("--color-app-line"),
+          focus: alpha("--color-app-focus"),
+          divider: alpha("--color-app-divider"),
+          selected: alpha("--color-app-selected"),
+        },
+        ink: {
+          DEFAULT: alpha("--color-ink"),
+          dull: alpha("--color-ink-dull"),
+          faint: alpha("--color-ink-faint"),
         },
         sidebar: {
           DEFAULT: alpha("--color-sidebar"),

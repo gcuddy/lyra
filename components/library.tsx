@@ -13,6 +13,7 @@ import BasicSticky from "react-sticky-el";
 import { produce } from "immer";
 
 import {
+  filteredLibraryCountAtom,
   useFilteredLibrary,
   useLibrary,
   useLoadedSong,
@@ -33,14 +34,17 @@ import {
 } from "@tanstack/react-table";
 import { useAudioPlayer } from "@/atoms/audio";
 import { useTable } from "@/view/table";
+import { useAtom } from "jotai";
 
 interface LibraryProps {
   path: string;
   scrollElement?: Element | null;
 }
 
+export const BOTTOM_BAR_HEIGHT = 32;
+
 export default function Library({ path, scrollElement }: LibraryProps) {
-    console.log("rendering library");
+  console.log("rendering library");
   // read directory
   const [fileEntries, setFileEntries] = useState<FileEntry[]>();
   const [isParsing, setIsParsing] = useState(false);
@@ -78,7 +82,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     getItemKey: (index) => library[index]?.id,
     overscan: 20,
     paddingStart: padding.top,
-    paddingEnd: padding.bottom,
+    paddingEnd: padding.bottom + BOTTOM_BAR_HEIGHT,
     scrollMargin: listOffset,
   });
 
@@ -156,7 +160,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     <>
       <div
         ref={parentRef}
-        className="col-span-4 bg-white dark:bg-gray-950 overscroll-none"
+        className="col-span-4 bg-white dark:bg-gray-950 relative overscroll-none"
         style={{
           height: `100%`,
           width: "100%",
@@ -275,6 +279,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
               }}
             </For>
           </div>
+          <BottomBar />
         </div>
       </div>
       {/* <button
@@ -305,6 +310,28 @@ export default function Library({ path, scrollElement }: LibraryProps) {
       </span> */}
       {/* {JSON.stringify(library)} */}
     </>
+  );
+}
+
+function BottomBar() {
+  const [filteredLibraryCount] = useAtom(filteredLibraryCountAtom);
+  return (
+    <div
+      className="fixed bottom-0 z-10 bg-app/80 flex w-full items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
+      style={{
+        height: BOTTOM_BAR_HEIGHT,
+      }}
+    >
+      <div className="flex-grow">
+        <span>{filteredLibraryCount} songs</span>
+      </div>
+      {/* <div className="flex-grow">
+            <span>0:00</span>
+        </div>
+        <div className="flex-grow">
+            <span>0:00</span>
+        </div> */}
+    </div>
   );
 }
 
