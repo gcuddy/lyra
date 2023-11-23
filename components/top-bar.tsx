@@ -153,8 +153,14 @@ export default function TopBar() {
   if (!audio) return <div></div>;
 
   return (
-    <div className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 border-b items-center w-full h-16 px-4">
-      <div className="flex col-span-3 justify-center flex-row items-center pointer-events-auto gap-2">
+    <div
+      data-tauri-drag-region
+      className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 border-b items-center w-full h-20 px-4"
+    >
+      <div
+        data-tauri-drag-region
+        className="flex col-span-3 justify-center flex-row items-center pointer-events-auto gap-2"
+      >
         <div className="flex gap-2">
           <button className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400">
             <Rewind className="relative -left-px h-5 w-5" />
@@ -201,9 +207,12 @@ export default function TopBar() {
           <Volume2 className="h-4 w-4" />
         </div>
       </div>
-      <div className="grow col-start-5 col-span-4 p-2 h-full">
+      <div
+        data-tauri-drag-region
+        className="grow col-start-5 col-span-4 p-2 h-full"
+      >
         {/* this will hold current song */}
-        <div className="flex grow h-14 border border-app-line bg-app-box/50 rounded-lg">
+        <div className="flex grow h-14 border border-app-line bg-app-box/50 rounded-lg self-center">
           {!!loadedSong && (
             // <Marquee speed={25}>
             // </Marquee>
@@ -225,7 +234,10 @@ export default function TopBar() {
           )}
         </div>
       </div>
-      <div className="col-span-2 col-end-12 justify-center flex items-center">
+      <div
+        data-tauri-drag-region
+        className="col-span-2 col-end-12 justify-center flex items-center"
+      >
         <SearchBar />
       </div>
     </div>
