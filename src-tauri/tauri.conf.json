@@ -61,6 +61,7 @@
         "timestampUrl": ""
       }
     },
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     },
@@ -73,6 +74,7 @@
         "height": 600,
         "resizable": true,
         "title": "rTunes",
+        "transparent": true,
         "width": 800
       }
     ]
