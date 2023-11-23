@@ -2,9 +2,11 @@ import { XCircle } from "@phosphor-icons/react";
 import { AudioPlayer, useAudioPlayer } from "@/atoms/audio";
 import {
   useLibrary,
+  useLoadedImageDataUrl,
   useLoadedSong,
   usePlaying,
   useSearch,
+  useSelectedImageDataUrl,
 } from "@/atoms/library";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import Marquee from "react-fast-marquee";
@@ -46,7 +48,6 @@ export default function TopBar() {
   const [playing, setPlaying] = usePlaying();
   const [audio, setAudio] = useAudioPlayer();
   const [library] = useLibrary();
-
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -212,7 +213,8 @@ export default function TopBar() {
         className="grow col-start-5 col-span-4 p-2 h-full"
       >
         {/* this will hold current song */}
-        <div className="flex grow h-14 border border-app-line bg-app-box/50 rounded-lg self-center">
+        <div className="flex grow h-14 border border-app-line bg-app-box/50 rounded-lg overflow-hidden self-center">
+          <CovertArt />
           {!!loadedSong && (
             // <Marquee speed={25}>
             // </Marquee>
@@ -240,6 +242,20 @@ export default function TopBar() {
       >
         <SearchBar />
       </div>
+    </div>
+  );
+}
+
+function CovertArt() {
+  const [loadedImageDataUrlState] = useLoadedImageDataUrl();
+
+  return (
+    <div className="flex h-14 rounded-[inherit] aspect-square object-cover flex-col items-center justify-center">
+      {loadedImageDataUrlState.state === "hasData" ? (
+        <img src={loadedImageDataUrlState.data} />
+      ) : (
+        <div className="h-full w-full bg-app-box"></div>
+      )}
     </div>
   );
 }

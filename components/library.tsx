@@ -1,19 +1,20 @@
 import { CaretDown, CaretUp } from "@phosphor-icons/react";
 
 import { usePaths } from "@/atoms/paths";
-import { BaseDirectory, readDir, type FileEntry } from "@tauri-apps/api/fs";
-import { convertFileSrc, invoke } from "@tauri-apps/api/tauri";
+import { readDir, type FileEntry } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/tauri";
+import { produce } from "immer";
 import {
-  useEffect,
-  useState,
-  useRef,
-  useMemo,
   useCallback,
+  useEffect,
   useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import BasicSticky from "react-sticky-el";
-import { produce } from "immer";
 
+import { useAudioPlayer } from "@/atoms/audio";
 import {
   filteredLibraryCountAtom,
   useFilteredLibrary,
@@ -21,23 +22,21 @@ import {
   useLoadedSong,
   usePlaying,
   useSelectedSong,
-  //   useSort,
 } from "@/atoms/library";
-import { For } from "million/react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useTable } from "@/view/table";
 import {
   ColumnDef,
+  Row,
+  SortingState,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  Row,
-  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useAudioPlayer } from "@/atoms/audio";
-import { useTable } from "@/view/table";
-import { useAtom } from "jotai";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
+import { useAtom } from "jotai";
+import { For } from "million/react";
 
 interface LibraryProps {
   path: string;
@@ -47,7 +46,7 @@ interface LibraryProps {
 export const BOTTOM_BAR_HEIGHT = 32;
 
 export default function Library({ path, scrollElement }: LibraryProps) {
-  console.log("rendering library");
+  console.log("rendering library", path);
   // read directory
   const [fileEntries, setFileEntries] = useState<FileEntry[]>();
   const [isParsing, setIsParsing] = useState(false);
@@ -157,7 +156,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   //   }
 
   const virtualRows = rowVirtualizer.getVirtualItems();
-  useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
+  //   useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
   return (
     <>
@@ -217,7 +216,6 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
                   const isActive = header.id === firstSort?.id;
 
-                  console.log({ isActive });
                   return (
                     <div key={header.id}>
                       {header.isPlaceholder ? null : (

@@ -9,9 +9,6 @@ export const selectedSongAtom = atom<RawSong | null>(null);
 const loadedSongAtom = atom<RawSong | null>(null);
 const playingAtom = atom(false);
 
-
-
-
 export function useLibrary() {
   return [...useAtom(libraryAtom)] as const;
 }
@@ -106,6 +103,16 @@ export function usePlaying() {
 //   return [...useAtom(filteredLibraryAtom)] as const;
 // }
 
+const loadedSongAlbumArt = atom(async (get) => {
+  const song = get(loadedSongAtom);
+  if (!song) return;
+  const cover = await invoke<Picture>("get_album_cover", {
+    path: song.path,
+  });
+  console.log({ cover });
+  return cover;
+});
+
 const selectedSongAlbumArt = atom(async (get) => {
   const song = get(selectedSongAtom);
   if (!song) return;
@@ -116,6 +123,7 @@ const selectedSongAlbumArt = atom(async (get) => {
   return cover;
 });
 const loadableSelectedSong = loadable(selectedSongAlbumArt);
+const loadableLoadedSong = loadable(loadedSongAlbumArt);
 
 export function useSelectedSongAlbumArt() {
   return [...useAtom(loadableSelectedSong)] as const;
@@ -129,6 +137,21 @@ const selectedImageDataUrl = atom(async (get) => {
   const dataURL = URL.createObjectURL(blob);
   return dataURL;
 });
+
+const loadedImageDataUrl = atom(async (get) => {
+  const song = await get(loadedSongAlbumArt);
+  if (!song) return;
+  const uint8Array = new Uint8Array(song.data);
+  const blob = new Blob([uint8Array]);
+  const dataURL = URL.createObjectURL(blob);
+  return dataURL;
+});
+
+const loadableLoadedImageDataUrl = loadable(loadedImageDataUrl);
+
+export function useLoadedImageDataUrl() {
+  return [...useAtom(loadableLoadedImageDataUrl)] as const;
+}
 
 const loadableSelectedImageDataUrl = loadable(selectedImageDataUrl);
 
