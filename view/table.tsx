@@ -14,6 +14,7 @@ export function useTable({ data }: { data: RawSong[] }) {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     // track_number: false,
+    disc_number: false,
   });
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -26,12 +27,23 @@ export function useTable({ data }: { data: RawSong[] }) {
     },
     {
       desc: false,
+      id: "disc_number",
+    },
+    {
+      desc: false,
       id: "track_number",
     },
   ]);
 
   const columns = useMemo<ColumnDef<RawSong>[]>(
     () => [
+      {
+        id: "disc_number",
+        accessorKey: "disc_number",
+        header: "Disc",
+        minSize: 30,
+        maxSize: 50,
+      },
       {
         id: "track_number",
         accessorKey: "track_number",

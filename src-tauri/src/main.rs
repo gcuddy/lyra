@@ -97,6 +97,7 @@ struct Song {
     artist: String,
     album_artist: String,
     album_title: String,
+    rating: Option<u8>,
     genre: Option<String>,
     audio_bitrate: Option<u32>,
     overall_bitrate: Option<u32>,
@@ -159,8 +160,16 @@ async fn read_music_file(path: &str) -> Option<Song> {
     //     None => None,
     // };
     // album.as_ref()
+    let rating = match tag.get(&ItemKey::Popularimeter) {
+        Some(s) => match s.value() {
+            ItemValue::Text(t) => t.parse::<u8>().ok(),
+            _ => None,
+        },
+        None => None,
+    };
     let song = Song {
         id,
+        rating,
         title: match tag.title() {
             Some(title) => title.to_string(),
             None => "[untitled]".to_string(),

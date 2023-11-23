@@ -6,6 +6,7 @@ type RawSong = {
   path: string;
   title: string;
   artist: string;
+  rating?: number;
   album_artist: string;
   album_title: string;
   genre?: string;

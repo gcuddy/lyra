@@ -40,6 +40,7 @@ interface LibraryProps {
 }
 
 export default function Library({ path, scrollElement }: LibraryProps) {
+    console.log("rendering library");
   // read directory
   const [fileEntries, setFileEntries] = useState<FileEntry[]>();
   const [isParsing, setIsParsing] = useState(false);

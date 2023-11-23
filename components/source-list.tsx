@@ -1,5 +1,6 @@
 import {
   useSelectedImageDataUrl,
+  useSelectedSong,
   useSelectedSongAlbumArt,
 } from "@/atoms/library";
 import { useSourceOpen } from "@/atoms/source";
@@ -11,6 +12,7 @@ import Link from "next/link";
 export default function SourceList() {
   const [source, setSource] = useSourceOpen();
 
+  const [selectedSong] = useSelectedSong();
   const [selectedImageDataUrlState] = useSelectedImageDataUrl();
 
   console.log({ selectedImageDataUrlState });
@@ -45,6 +47,9 @@ export default function SourceList() {
 
       <div>
         {/* album art */}
+        <div className="text-xs overflow-auto">
+          {JSON.stringify(selectedSong)}
+        </div>
         {selectedImageDataUrlState.state === "hasData" && (
           <div>
             <img src={selectedImageDataUrlState.data} />

@@ -32,6 +32,8 @@ function useArtistOrAlbum() {
   return [...useAtom(artistOrAlbumAtom)] as const;
 }
 
+const volumeAtom = atomWithStorage("volume", 1);
+
 export default function TopBar() {
   const [search, setSearch] = useSearch();
   const [loadedSong] = useLoadedSong();
@@ -41,10 +43,21 @@ export default function TopBar() {
 
   const [artistOrAlbum, setArtistOrAlbum] = useArtistOrAlbum();
 
+  const [volume, setVolume] = useAtom(volumeAtom);
+
   function toggleArtistOrAlbum() {
     console.log("toggling artist or album");
     setArtistOrAlbum(artistOrAlbum === "artist" ? "album" : "artist");
   }
+
+  useEffect(() => {
+    if (!loadedSong) return;
+    if (!audio?.audio) return;
+    const src = convertFileSrc(loadedSong.path);
+    audio.audio.src = src;
+    audio.audio.currentTime = 0;
+    play();
+  }, [loadedSong]);
 
   //   TODO: should these move into a hook?
   function pause() {
@@ -71,8 +84,9 @@ export default function TopBar() {
   }
 
   useEffect(() => {
-    const audio = new AudioPlayer();
-    setAudio(audio);
+    if (audio?.audio) return;
+    const _audio = new AudioPlayer();
+    setAudio(_audio);
     if (audio?.audio) {
       audio.audio.addEventListener("pause", pause);
       audio.audio.addEventListener("play", play);
@@ -105,6 +119,12 @@ export default function TopBar() {
       unlisten.then((f) => f());
     };
   }, [audio]);
+
+  useEffect(() => {
+    if (audio?.audio) {
+      audio.audio.volume = volume;
+    }
+  }, [audio, volume]);
 
   if (!audio) return <div></div>;
 
@@ -144,7 +164,16 @@ export default function TopBar() {
         </div>
         <div className="flex grow">
           <Volume1 className="h-4 w-4" />
-          <Slider className="grow" />
+          <Slider
+            min={0}
+            max={1}
+            step={0.0625}
+            value={[volume]}
+            onValueChange={(value) => {
+              setVolume(value[0]);
+            }}
+            className="grow"
+          />
           <Volume2 className="h-4 w-4" />
         </div>
       </div>
