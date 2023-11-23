@@ -21,8 +21,11 @@ const filteredLibraryAtom = atom((get) => {
   const library = get(libraryAtom);
   const search = get(searchAtom);
   if (search === "") return library;
+  console.log({ search });
   return library.filter((song) =>
-    song.title.toLowerCase().includes(search.toLowerCase())
+    `${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 });
 

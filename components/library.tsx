@@ -39,12 +39,15 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const [playing, setPlaying] = usePlaying();
   const [audio] = useAudioPlayer();
 
+
+  const count = library?.length || 0;
+
   const rowVirtualizer = useVirtualizer({
-    count: library?.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 35,
+    count,
+    getScrollElement: useCallback(() => parentRef.current, [parentRef]),
+    estimateSize: useCallback(() => 35, []),
     getItemKey: (index) => library[index]?.id,
-    overscan: 10,
+    overscan: 20,
     paddingStart: 16,
     //   scrollMargin,
   });
