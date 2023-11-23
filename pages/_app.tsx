@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Inter } from "next/font/google";
 import Greet from "./greet";
 import TopBar from "@/components/top-bar";
-import SourceList from "@/components/source-list";
 import Library from "@/components/library";
 // import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/api/dialog";
@@ -13,6 +12,10 @@ import type { WebviewWindow } from "@tauri-apps/api/window";
 import { Store } from "tauri-plugin-store-api";
 import { useDirectoryPath } from "@/atoms/paths";
 import { useMainScrollRef } from "@/atoms/refs";
+import dynamic from "next/dynamic";
+const SourceList = dynamic(() => import("@/components/source-list"), {
+  ssr: false,
+});
 
 const inter = Inter({ subsets: ["latin"] });
 export default function App({ Component, pageProps }: AppProps) {

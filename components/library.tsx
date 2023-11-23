@@ -81,6 +81,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     return acc;
   }
 
+  console.log({ library });
+
   async function fn_parse() {
     if (isParsing) return;
     console.time("read_music_files");
@@ -91,6 +93,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     });
     console.log({ metadata });
     if (metadata?.length) {
+      console.log("got metadata length");
       setLibrary(metadata);
     }
     console.log("done");
@@ -120,7 +123,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
   useEffect(() => {
     readDirectory();
-  }, [path]);
+  }, []);
 
   if (isParsing) {
     return <div>Reading music files...</div>;
@@ -139,7 +142,24 @@ export default function Library({ path, scrollElement }: LibraryProps) {
           pointerEvents: "auto",
         }}
       >
-        {library.length} songs
+        <button
+          onClick={() => {
+            console.time("read_music_files");
+            invoke<RawSong[]>("process_music_files", {
+              paths: musicFiles,
+            }).then((metadata) => {
+              console.log({ metadata });
+              console.timeEnd("read_music_files");
+              //   if (metadata?.length) {
+              //     console.log("got metadata length");
+              //     setLibrary(metadata);
+              //   }
+            });
+          }}
+        >
+          parse
+        </button>
+        <div>{library.length} songs</div>
         <div
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
