@@ -77,10 +77,13 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [appWindow]);
   return (
     <main
-      className={`flex select-none pointer-events-none min-h-screen  h-16 flex-col items-center justify-between ${inter.className}`}
+      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between ${inter.className}`}
     >
       <TopBar />
-      <div className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full">
+      <div
+        ref={setMainScrollRef}
+        className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full"
+      >
         <div className="flex flex-col basis-1/4 max-w-xs">
           <div className="bg-gray-600 items-center justify-center text-center">
             Source

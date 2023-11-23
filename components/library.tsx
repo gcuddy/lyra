@@ -1,14 +1,24 @@
 import { usePaths } from "@/atoms/paths";
 import { BaseDirectory, readDir, type FileEntry } from "@tauri-apps/api/fs";
 import { convertFileSrc, invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import * as mm from "music-metadata-browser";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+} from "react";
+import BasicSticky from "react-sticky-el";
+import { produce } from "immer";
+
 import {
   useFilteredLibrary,
   useLibrary,
   useLoadedSong,
   usePlaying,
   useSelectedSong,
+  //   useSort,
 } from "@/atoms/library";
 import { For } from "million/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -22,6 +32,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useAudioPlayer } from "@/atoms/audio";
+import { useTable } from "@/view/table";
 
 interface LibraryProps {
   path: string;
@@ -38,9 +49,26 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = usePlaying();
   const [audio] = useAudioPlayer();
+  const [listOffset, setListOffset] = useState(0);
 
+  //   const [sort, setSort] = useSort();
+  //   console.log({ sort });
 
+  const { table } = useTable({ data: library });
+
+  const { columnVisibility, columnSizing } = table.getState();
+  const { rows, rowsById } = table.getRowModel();
+
+  //   or rows.length?
   const count = library?.length || 0;
+
+  const padding = {
+    top: 12,
+    bottom: 12,
+    left: 16,
+    right: 16,
+  };
+  const [top, setTop] = useState(256);
 
   const rowVirtualizer = useVirtualizer({
     count,
@@ -48,22 +76,10 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     estimateSize: useCallback(() => 35, []),
     getItemKey: (index) => library[index]?.id,
     overscan: 20,
-    paddingStart: 16,
-    //   scrollMargin,
+    paddingStart: padding.top,
+    paddingEnd: padding.bottom,
+    scrollMargin: listOffset,
   });
-  //   const rowVirtualizer = useVirtualizer({
-  //     count: 10000,
-  //     getScrollElement: () => parentRef.current,
-  //     estimateSize: () => 35,
-  //   });
-
-  //   const { virtualItems: virtualRows, totalSize } = rowVirtualizer;
-
-  //   const paddingTop = virtualRows.length > 0 ? virtualRows?.[0]?.start || 0 : 0;
-  //   const paddingBottom =
-  //     virtualRows.length > 0
-  //       ? totalSize - (virtualRows?.[virtualRows.length - 1]?.end || 0)
-  //       : 0;
 
   function isAudioFile(filename: string): boolean {
     return filename.match(/\.(mp3|ogg|aac|flac|wav|m4a)$/) !== null;
@@ -128,16 +144,18 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     readDirectory();
   }, []);
 
-  if (isParsing) {
-    return <div>Reading music files...</div>;
-  }
+  //   if (isParsing) {
+  //     return <div>Reading music files...</div>;
+  //   }
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
   return (
     <>
-      {!!isParsing && "Parsing"}
       <div
         ref={parentRef}
-        className="col-span-4 bg-white dark:bg-gray-950"
+        className="col-span-4 bg-white dark:bg-gray-950 overscroll-none"
         style={{
           height: `100%`,
           width: "100%",
@@ -145,7 +163,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
           pointerEvents: "auto",
         }}
       >
-        <button
+        {/* <button
           onClick={() => {
             console.time("read_music_files");
             invoke<RawSong[]>("process_music_files", {
@@ -162,32 +180,100 @@ export default function Library({ path, scrollElement }: LibraryProps) {
         >
           parse
         </button>
-        <div>{library.length} songs</div>
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
+        <div>{library.length} songs</div> */}
+        <BasicSticky
+          scrollElement={parentRef.current ?? undefined}
+          stickyStyle={{ zIndex: 10 }}
+          //   stickyStyle={{ top, zIndex: 10 }}
+          //   topOffset={-top}
+          // Without this the width of the element doesn't get updated
+          // when the inspector is toggled
+          positionRecheckInterval={100}
         >
-          <For each={rowVirtualizer.getVirtualItems()} as="div">
-            {(virtualItem) => (
-              <div
-                key={virtualItem.key}
-                className="flex items-center"
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-              >
-                <LibraryItem song={library[virtualItem.index]} />
+          <div className="border-b backdrop-saturate-[1.2] backdrop-blur-lg bg-black/50 overflow-x-auto overscroll-x-none">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <div key={headerGroup.id} className="flex w-fit">
+                {headerGroup.headers.map((header, i) => {
+                  const size = header.column.getSize();
+
+                  // const orderKey
+                  const cellContent = flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  );
+
+                  return (
+                    <div key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <div
+                          style={{
+                            width: size,
+                          }}
+                          className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs"
+                          onClick={() => {
+                            // see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
+                            table.setSorting(
+                              produce((draft) => {
+                                if (draft[0].id === header.id) {
+                                  draft[0].desc = !draft[0].desc;
+                                }
+                                draft[0].id = header.id;
+                              })
+                            );
+                          }}
+                        >
+                          <div className="truncate">
+                            <span>{cellContent}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </For>
+            ))}
+          </div>
+        </BasicSticky>
+        {/* table body ref */}
+        <div className="overflow-x-auto overscroll-x-none">
+          <div
+            className="relative"
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+            }}
+          >
+            <For each={rowVirtualizer.getVirtualItems()} as="div">
+              {(virtualItem) => {
+                // we don't have to use normal td's here because it's a desktop app
+
+                const row = rows[virtualItem.index];
+
+                if (!row) return <></>;
+
+                // TODO: selected magic here
+
+                return (
+                  <div
+                    key={row.id}
+                    className="absolute left-0 top-0 min-w-full"
+                    style={{
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${
+                        virtualItem.start - rowVirtualizer.options.scrollMargin
+                      }px)`,
+                    }}
+                  >
+                    {/* todo: selected indicator */}
+                    <LibraryItem
+                      row={row}
+                      paddingLeft={padding.left}
+                      paddingRight={padding.right}
+                    />
+                  </div>
+                );
+              }}
+            </For>
+          </div>
         </div>
       </div>
       {/* <button
@@ -221,25 +307,46 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   );
 }
 
-function LibraryItem({ song }: { song: RawSong }) {
+function LibraryItem({
+  row,
+  paddingLeft = 0,
+  paddingRight = 0,
+}: {
+  row: Row<RawSong>;
+  paddingLeft: number;
+  paddingRight: number;
+}) {
   const [selectedSong, setSelectedSong] = useSelectedSong();
   const [, setLoadedSong] = useLoadedSong();
   return (
     <>
       <div
         onClick={() => {
-          setSelectedSong(song);
+          setSelectedSong(row.original);
         }}
         onDoubleClick={() => {
-          setLoadedSong(song);
+          setLoadedSong(row.original);
         }}
-        className={`h-full grow grid grid-cols-3 items-center select-none cursor-default truncate ${
-          selectedSong?.id === song?.id ? "bg-blue-500 text-white" : ""
+        // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
+        className={`relative flex h-full items-center ${
+          selectedSong?.id === row?.id ? "bg-blue-500 text-white" : ""
         }`}
       >
-        <span className="truncate">{song?.title}</span>
+        {row.getVisibleCells().map((cell) => {
+          return (
+            <div
+              role="cell"
+              key={cell.id}
+              className="table-cell shrink-0 px-4 text-xs truncate"
+              style={{ width: cell.column.getSize() }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </div>
+          );
+        })}
+        {/* <span className="truncate">{song?.title}</span>
         <span className="truncate">{song.artist}</span>
-        <span className="truncate">{song.album_title}</span>
+        <span className="truncate">{song.album_title}</span> */}
       </div>
     </>
   );
@@ -311,7 +418,7 @@ function Table({ data = [] }: { data: RawSong[] }) {
                     <div
                       {...{
                         className: header.column.getCanSort()
-                          ? "cursor-pointer select-none"
+                          ? "cursor-pointer select-none pointer-events-auto"
                           : "",
                         onClick: header.column.getToggleSortingHandler(),
                       }}

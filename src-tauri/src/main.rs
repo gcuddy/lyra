@@ -7,8 +7,7 @@ use nanoid::nanoid;
 use rayon::prelude::*;
 use std::fs::File;
 use std::path::Path;
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, Manager};
-
+use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Submenu};
 
 // use symphonia::core::codecs::{DecoderOptions, FinalizeResult, CODEC_TYPE_NULL};
 // use symphonia::core::formats::{FormatOptions, FormatReader, Track};
@@ -70,7 +69,9 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![greet, read_music_file, get_album_cover, process_music_files])
+        .invoke_handler(
+            tauri::generate_handler![greet, read_music_file, get_album_cover, process_music_files]
+        )
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -79,8 +80,6 @@ fn main() {
 fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
 }
-
-
 
 #[derive(Debug, serde::Serialize)]
 pub struct Picture {
@@ -220,7 +219,7 @@ async fn read_music_file(path: &str) -> Option<Song> {
 fn process_music_files(paths: Vec<&str>) -> Vec<Song> {
     println!("paths: {:?}", paths.len());
     let batch_size = 100; // Experiment with different batch sizes
-    paths
+    let songs: Vec<Song> = paths
         .chunks(batch_size)
         .flat_map(|batch| {
             batch
@@ -231,9 +230,12 @@ fn process_music_files(paths: Vec<&str>) -> Vec<Song> {
                 })
                 .collect::<Vec<_>>()
         })
-        .collect()
-}
+        .collect();
 
+    // TODO sort by artist, then track number
+    // let sorted = songs.sort_unstable_by(|a, b| a.title.cmp(b.title));
+    songs
+}
 
 // TODO: should this be async?
 #[tauri::command]
@@ -256,15 +258,17 @@ fn get_album_cover(path: &str) -> Option<Picture> {
         None => tagged_file.first_tag()?,
     };
 
-
-    let cover = tag.get_picture_type(lofty::PictureType::CoverFront)
+    let cover = tag
+        .get_picture_type(lofty::PictureType::CoverFront)
         .or(tag.pictures().first());
 
     match cover {
-        Some(cover) => Some(Picture {
-            mime_type: cover.mime_type().to_string(),
-            data: cover.data().to_vec(),
-        }),
+        Some(cover) => {
+            Some(Picture {
+                mime_type: cover.mime_type().to_string(),
+                data: cover.data().to_vec(),
+            })
+        }
         None => None,
     }
 }
@@ -272,7 +276,5 @@ fn get_album_cover(path: &str) -> Option<Picture> {
 
 // A function that sends a message from Rust to JavaScript via a Tauri Event
 fn rs2js<R: tauri::Runtime>(message: String, manager: &impl Manager<R>) {
-    manager
-        .emit_all("rs2js", message)
-        .unwrap();
+    manager.emit_all("rs2js", message).unwrap();
 }

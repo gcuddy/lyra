@@ -17,16 +17,60 @@ export function useSearch() {
   return useAtom(searchAtom);
 }
 
+// export type Sort = {
+//   key: keyof RawSong;
+//   dir: "asc" | "desc";
+// };
+
+// const sortAtom = atom<Sort>({ key: "artist", dir: "asc" });
+
+// const sort = (a: RawSong, b: RawSong, sort: Sort) => {
+//   const { key, dir } = sort;
+//   const akey = a[key];
+//   const bkey = b[key];
+//   const atrackNum = a.track_number;
+//   const btrackNum = b.track_number;
+//   if (typeof akey === "string" && bkey === "string") {
+//     // sort by artist and then by track number
+
+//     return (
+//       akey.localeCompare(bkey) * (dir === "asc" ? 1 : -1) ||
+//       (atrackNum ?? 0 - (btrackNum ?? 0))
+//     );
+//   }
+
+//   if (typeof akey === "number" && typeof bkey === "number") {
+//     return (akey - bkey) * (dir === "asc" ? 1 : -1);
+//   }
+
+//   return 0;
+// };
+
+// export function useSort() {
+//   return [...useAtom(sortAtom)] as const;
+// }
+
+// const sortedLibraryAtom = atom((get) => {
+//   const library = get(libraryAtom);
+//   const sortState = get(sortAtom);
+//   console.log({ sortState });
+//   return library.sort((a, b) => sort(a, b, sortState));
+// });
+
+// export function useSortedLibrary() {
+//   return [...useAtom(sortedLibraryAtom)] as const;
+// }
+
 const filteredLibraryAtom = atom((get) => {
   const library = get(libraryAtom);
   const search = get(searchAtom);
   if (search === "") return library;
-  console.log({ search });
-  return library.filter((song) =>
+  const filtered = library.filter((song) =>
     `${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+  return filtered;
 });
 
 export function useFilteredLibrary() {
