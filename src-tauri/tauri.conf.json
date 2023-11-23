@@ -71,11 +71,15 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
+        "height": 725,
+        "width": 1400,
+        "minWidth": 768,
+        "minHeight": 500,
         "resizable": true,
+        "focus": false,
+        "decorations": true,
         "title": "rTunes",
-        "transparent": true,
-        "width": 800
+        "transparent": true
       }
     ]
   }

@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --dark-hue: 250;
+  --light-hue: 230;
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
@@ -14,27 +16,32 @@
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
 
-    --dark-hue: 250;
-
     --color-border: var(--dark-hue), 15%, 14%;
   }
 }
 
+.light {
+  --color-app: var(--light-hue), 5%, 100%;
+
+  /* accent */
+  --color-accent: 208, 100%, 57%;
+
+  --color-sidebar: var(--light-hue), 5%, 96%;
+  --color-sidebar-selected: var(--light-hue), 10%, 80%;
+  --color-sidebar-ink: var(--light-hue), 5%, 20%;
+  --color-sidebar-ink-dull: var(--light-hue), 5%, 30%;
+  --color-sidebar-ink-faint: var(--light-hue), 5%, 40%;
+  --color-sidebar-divider: var(--light-hue), 15%, 93%;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-    overflow: hidden;
 }
 
 button {
-    @apply cursor-default;
+  @apply cursor-default;
 }
 
 * {
-    border-color: hsl(var(--color-border));
+  border-color: hsl(var(--color-border));
 }

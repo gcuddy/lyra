@@ -85,12 +85,7 @@ export default function App({ Component, pageProps }: AppProps) {
         className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full"
       >
         <div className="flex flex-col basis-1/4 max-w-xs">
-          <div className="bg-gray-600 items-center justify-center text-center">
-            Source
-          </div>
-          <div className="grow flex flex-col">
-            <SourceList />
-          </div>
+          <SourceList />
         </div>
         <Component {...pageProps} />
         {/* <div
