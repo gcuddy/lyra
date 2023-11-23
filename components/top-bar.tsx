@@ -210,33 +210,13 @@ export default function TopBar() {
                   ? loadedSong.artist
                   : loadedSong.album_title}
               </span>
-              <div className="flex grow w-full items-center gap-2 px-4">
-                <span className="text-xs tabular-nums">
-                  {format(time * 1000, "mm:ss")}
-                </span>
-                <Seeker
-                  className="w-max grow"
-                  min={0}
-                  step={1}
-                  value={[time]}
-                  onValueChange={(value) => {
-                    if (audio?.audio) {
-                      console.log({ value });
-                      console.log({
-                        currenttime: audio.audio.currentTime,
-                        duration: audio.audio.duration,
-                      });
-                      //   audio.audio.currentTime
-                      //   audio.audio.duration
-                      audio.audio.currentTime = value[0];
-                    }
-                  }}
-                  max={duration}
+              {audio.audio ? (
+                <TimeDisplay
+                  time={time}
+                  duration={duration}
+                  audioEl={audio.audio}
                 />
-                <span className="text-xs tabular-nums">
-                  {format(duration * 1000, "mm:ss")}
-                </span>
-              </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -255,6 +235,53 @@ export default function TopBar() {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+function TimeDisplay({
+  time,
+  duration,
+  audioEl,
+}: {
+  time: number;
+  duration: number;
+  audioEl: HTMLAudioElement;
+}) {
+  const [showTimeRemaining, setShowTimeRemaining] = useState(false);
+
+  return (
+    <div className="flex grow w-full items-center gap-2 px-4">
+      <span className="text-xs tabular-nums">
+        {format(time * 1000, "mm:ss")}
+      </span>
+      <Seeker
+        className="w-max grow"
+        min={0}
+        step={1}
+        value={[time]}
+        onValueChange={(value) => {
+          if (audioEl) {
+            console.log({ value });
+            console.log({
+              currenttime: audioEl.currentTime,
+              duration: audioEl.duration,
+            });
+            audioEl.currentTime = value[0];
+          }
+        }}
+        max={duration}
+      />
+      <span
+        onClick={() => {
+          setShowTimeRemaining(!showTimeRemaining);
+        }}
+        className="text-xs tabular-nums"
+      >
+        {showTimeRemaining
+          ? format((duration - time) * 1000, "-mm:ss")
+          : format(duration * 1000, "mm:ss")}
+      </span>
     </div>
   );
 }
