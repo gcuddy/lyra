@@ -83,12 +83,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <main
-      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 ${inter.className}`}
+      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
     >
       <TopBar />
       <div
         ref={setMainScrollRef}
-        className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full"
+        className="grid grid-cols-5 grow h-[calc(100%-80px)] w-full"
       >
         <div style={{}} className="flex flex-col basis-1/4 max-w-xs">
           <SourceList />

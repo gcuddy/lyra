@@ -1,6 +1,14 @@
-import { XCircle } from "@phosphor-icons/react";
+import {
+  XCircle,
+  Play,
+  Pause,
+  SkipForward,
+  SkipBack,
+} from "@phosphor-icons/react";
 import { AudioPlayer, useAudioPlayer } from "@/atoms/audio";
 import {
+  playNextFromQueue,
+  songHistoryAtom,
   useLibrary,
   useLoadedImageDataUrl,
   useLoadedSong,
@@ -13,24 +21,24 @@ import Marquee from "react-fast-marquee";
 
 import {
   Rewind,
-  Play,
   FastForward,
-  Pause,
   SearchIcon,
   Volume1,
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Slider } from "./ui/slider";
+import { Slider } from "../ui/slider";
 import { listen } from "@tauri-apps/api/event";
 import { atomWithStorage } from "jotai/utils";
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { format } from "date-fns";
-import { Seeker } from "./ui/seeker";
-import { Input } from "./ui/input";
-import { Shortcut } from "./ui/shortcut";
+import { Seeker } from "../ui/seeker";
+import { Input } from "../ui/input";
+import { Shortcut } from "../ui/shortcut";
 import { ModifierKeys, keybind, keybindForOs } from "@/lib/utils";
 import { useOperatingSystem } from "@/hooks/useOperatingSystem";
+import { Button } from "../ui/button";
+import { queueAtom } from "@/atoms/queue";
 
 const artistOrAlbumAtom = atomWithStorage<"artist" | "album">(
   "artistOrAlbum",
@@ -50,6 +58,10 @@ export default function TopBar() {
   const [library] = useLibrary();
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  const songHistory = useAtomValue(songHistoryAtom);
+  const queue = useAtomValue(queueAtom);
+  const playNext = useSetAtom(playNextFromQueue);
 
   const [artistOrAlbum, setArtistOrAlbum] = useArtistOrAlbum();
 
@@ -156,42 +168,49 @@ export default function TopBar() {
   return (
     <div
       data-tauri-drag-region
-      className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 border-b items-center w-full h-20 px-4"
+      className="grid grid-cols-12 sticky top-0 flex-row justify-between gap-2 border-b border-app-line items-center w-full h-20 px-4"
     >
       <div
         data-tauri-drag-region
         className="flex col-span-3 justify-center flex-row items-center pointer-events-auto gap-2"
       >
         <div className="flex gap-2">
-          <button className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400">
-            <Rewind className="relative -left-px h-5 w-5" />
-          </button>
-          <button
+          <Button
+            disabled={!songHistory?.length}
+            onClick={() => {
+              const lastSong = songHistory.at(-1);
+              if (!lastSong) return;
+              setLoadedSong(lastSong);
+            }}
+            className="text-ink-dull h-10 w-10 flex-justify-between"
+          >
+            <SkipBack className="relative h-5 w-5" />
+          </Button>
+          <Button
             onClick={() => {
               if (playing) {
                 pause();
-                return;
               } else {
                 play();
               }
-              //   if (loadedSong && audio.audio) {
-              //     const src = convertFileSrc(loadedSong.path);
-              //     audio.audio.src = src;
-              //     audio.audio.play();
-              //     setPlaying(true);
-              //   }
             }}
-            className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400"
+            size="icon"
+            variant="subtle"
+            className="text-ink-dull h-10 w-10 flex justify-center"
           >
             {!playing ? (
-              <Play className="relative left-px h-5 w-5" />
+              <Play className="relative h-5 w-5" />
             ) : (
-              <Pause className="relative left-px h-5 w-5" />
+              <Pause className="relative h-5 w-5" />
             )}
-          </button>
-          <button className="flex flex-row items-center justify-center h-10 w-10 rounded-full border border-gray-400">
-            <FastForward className="relative left-px h-5 w-5" />
-          </button>
+          </Button>
+          <Button
+            disabled={!queue.length}
+            onClick={playNext}
+            className="text-ink-dull h-10 w-10 flex-justify-between"
+          >
+            <SkipForward className="relative h-5 w-5" />
+          </Button>
         </div>
         <div className="flex grow">
           <Volume1 className="h-4 w-4" />

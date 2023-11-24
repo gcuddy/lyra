@@ -2,12 +2,67 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { atom, useAtom } from "jotai";
 // maybe persist with localstorage or indexeddb or something? or with tauri? idk
 import { atomWithStorage, loadable } from "jotai/utils";
+import { atomEffect } from "jotai-effect";
+
+import { queueAtom } from "./queue";
 
 const libraryAtom = atomWithStorage<RawSong[]>("library", []);
 const searchAtom = atom<string>("");
 export const selectedSongAtom = atom<RawSong | null>(null);
-const loadedSongAtom = atom<RawSong | null>(null);
+const _loadedSongAtom = atom<RawSong | null>(null);
+const loadedSongAtom = atom(null, (get, set, song: RawSong | null) => {
+  get(logSongHistoryEffect);
+  set(_loadedSongAtom, song);
+});
 const playingAtom = atom(false);
+
+export const setLoadedSongAndUpdateQueue = atom(
+  null,
+  (get, set, song: RawSong) => {
+    console.log({ song });
+    // TODO: add prefs of how to handle queue-ing
+    set(loadedSongAtom, song);
+    const library = get(libraryAtom);
+    const queue = get(queueAtom);
+    // get songs in album and add to queue
+    const albumSongs = library
+      .filter(
+        (s) =>
+          s.album_title === song.album_title &&
+          s.album_artist === song.album_artist &&
+          s.path !== song.path &&
+          !queue.includes(s) &&
+          (s.track_number ?? 0) > (song.track_number ?? 0)
+      )
+      .sort((a, b) => {
+        // sort by disc number first
+        const adiscNum = a.disc_number ?? 0;
+        const bdiscNum = b.disc_number ?? 0;
+        if (adiscNum !== bdiscNum) return adiscNum - bdiscNum;
+        // then by track number
+        const atrackNum = a.track_number ?? 0;
+        const btrackNum = b.track_number ?? 0;
+        return atrackNum - btrackNum;
+      });
+    set(queueAtom, albumSongs);
+  }
+);
+
+export const songHistoryAtom = atom<RawSong[]>([]);
+
+const logSongHistoryEffect = atomEffect((get, set) => {
+  const song = get(_loadedSongAtom);
+  if (!song) return;
+  set(songHistoryAtom, (history) => [...history, song]);
+});
+
+export const playNextFromQueue = atom(null, (get, set) => {
+  const queue = get(queueAtom);
+  const nextSong = queue.shift();
+  if (!nextSong) return;
+  set(queueAtom, queue);
+  set(loadedSongAtom, nextSong);
+});
 
 export function useLibrary() {
   return [...useAtom(libraryAtom)] as const;
@@ -92,7 +147,7 @@ export function useSelectedSong() {
 }
 
 export function useLoadedSong() {
-  return [...useAtom(loadedSongAtom)] as const;
+  return [...useAtom(_loadedSongAtom)] as const;
 }
 
 export function usePlaying() {
@@ -104,7 +159,7 @@ export function usePlaying() {
 // }
 
 const loadedSongAlbumArt = atom(async (get) => {
-  const song = get(loadedSongAtom);
+  const song = get(_loadedSongAtom);
   if (!song) return;
   const cover = await invoke<Picture>("get_album_cover", {
     path: song.path,

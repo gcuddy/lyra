@@ -20,6 +20,7 @@
     "date-fns": "^2.30.0",
     "immer": "^10.0.3",
     "jotai": "^2.5.1",
+    "jotai-effect": "^0.2.3",
     "jotai-immer": "^0.2.0",
     "lucide-react": "^0.292.0",
     "million": "latest",

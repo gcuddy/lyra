@@ -7,6 +7,8 @@ import Link from "next/link";
 import NavLink from "./sidebar/link";
 import { HiMiniMusicalNote } from "react-icons/hi2";
 import { useTheme } from "@/hooks/useTheme";
+import { Button, ButtonLink } from "./ui/button";
+import { Plus, Queue } from "@phosphor-icons/react";
 
 export default function SourceList() {
   // we call here because this component is not rendered on the server
@@ -63,14 +65,31 @@ export default function SourceList() {
       <div>
         {/* album art */}
         <div className="text-xs overflow-auto">
-          {JSON.stringify(selectedSong)}
+          {/* {JSON.stringify(selectedSong)} */}
         </div>
-        {selectedImageDataUrlState.state === "hasData" && (
+        {/* Todo: move to inspector */}
+        {/* {selectedImageDataUrlState.state === "hasData" && (
           <div>
             <img src={selectedImageDataUrlState.data} />
           </div>
-        )}
+        )} */}
       </div>
+      <div className="absolute pointer-events-auto bottom-0 w-full px-3 py-2 pr-6 flex items-center justify-between flex-row">
+        {/* TODO: hover show next few, click show in sidebar, expand to show full page  */}
+        <ButtonLink
+          href="/queue"
+          variant="subtle"
+          size="icon"
+          className="text-sidebar-inkDull"
+        >
+          <Queue size={20} />
+        </ButtonLink>
+        {/* TODO: new playlist, new smart playlist */}
+        <Button variant="subtle" size="icon" className="text-sidebar-inkDull">
+          <Plus size={20} />
+        </Button>
+      </div>
+      {/* we'll have queue and add button here (add playlist, smart playlist, song) */}
     </div>
   );
 }

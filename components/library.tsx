@@ -18,6 +18,7 @@ import BasicSticky from "react-sticky-el";
 import { useAudioPlayer } from "@/atoms/audio";
 import {
   filteredLibraryCountAtom,
+  setLoadedSongAndUpdateQueue,
   useFilteredLibrary,
   useLibrary,
   useLoadedSong,
@@ -36,7 +37,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { For } from "million/react";
 import { cn } from "@/lib/utils";
 
@@ -394,7 +395,7 @@ const LibraryItem = memo(
   }) => {
     console.log("rendering library item", row.original.id);
     const [selectedSong, setSelectedSong] = useSelectedSong();
-    const [, setLoadedSong] = useLoadedSong();
+    const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
     return (
       <>
         <div
