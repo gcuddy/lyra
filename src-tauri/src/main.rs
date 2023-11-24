@@ -1,40 +1,22 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use bson::Document;
 use lofty::{Accessor, AudioFile, ItemKey, ItemValue, Probe, TaggedFileExt};
 use nanoid::nanoid;
 use rayon::prelude::*;
-use std::fs::File;
 use std::path::Path;
 use tauri::{AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu};
 
-// use symphonia::core::codecs::{DecoderOptions, FinalizeResult, CODEC_TYPE_NULL};
-// use symphonia::core::formats::{FormatOptions, FormatReader, Track};
-// use symphonia::core::io::MediaSourceStream;
-// use symphonia::core::meta::{MetadataOptions, MetadataReader};
-// use symphonia::core::probe::Hint;
-// use symphonia_metadata::id3v2;
+use logging_timer::time;
 
-use audiotags::{Album, Tag};
-use logging_timer::{stime, time};
-
-// mod output;
-
-// #[cfg(not(target_os = "linux"))]
-// mod resampler;
 
 fn main() {
     let open_directory = CustomMenuItem::new("openDirectory".to_string(), "Open Directory");
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let close = CustomMenuItem::new("close".to_string(), "Close");
 
     let submenu = Submenu::new(
         "File",
         Menu::new()
             .add_item(open_directory)
-            .add_item(quit)
-            .add_item(close),
     );
 
     // TODO: toggle play/pause display depending on state

@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { atom, useAtom } from "jotai";
+import { atomEffect } from "jotai-effect";
 // maybe persist with localstorage or indexeddb or something? or with tauri? idk
 import { atomWithStorage, loadable } from "jotai/utils";
-import { atomEffect } from "jotai-effect";
 
 import { queueAtom } from "./queue";
 
@@ -18,36 +18,35 @@ const loadedSongAtom = atom(null, (get, set, song: RawSong | null) => {
 const playingAtom = atom(false);
 
 export const setLoadedSongAndUpdateQueue = atom(
-  null,
-  (get, set, song: RawSong) => {
-    console.log(`settingloadedsongandupdatingqueue`, { song });
-    // TODO: add prefs of how to handle queue-ing
-    set(loadedSongAtom, song);
-    const library = get(libraryAtom);
-    const queue = get(queueAtom);
-    // get songs in album and add to queue
-    const albumSongs = library
-      .filter(
-        (s) =>
-          s.album_title === song.album_title &&
-          s.album_artist === song.album_artist &&
-          s.path !== song.path &&
-          !queue.includes(s) &&
-          (s.track_number ?? 0) > (song.track_number ?? 0)
-      )
-      .sort((a, b) => {
-        // sort by disc number first
-        const adiscNum = a.disc_number ?? 0;
-        const bdiscNum = b.disc_number ?? 0;
-        if (adiscNum !== bdiscNum) return adiscNum - bdiscNum;
-        // then by track number
-        const atrackNum = a.track_number ?? 0;
-        const btrackNum = b.track_number ?? 0;
-        return atrackNum - btrackNum;
-      });
-    console.log({ songsToAddToQueue: albumSongs });
-    set(queueAtom, albumSongs);
-  }
+	null,
+	(get, set, song: RawSong) => {
+		// TODO: add prefs of how to handle queue-ing
+		set(loadedSongAtom, song);
+		const library = get(libraryAtom);
+		const queue = get(queueAtom);
+		// get songs in album and add to queue
+		const albumSongs = library
+			.filter(
+				(s) =>
+					s.album_title === song.album_title &&
+					s.album_artist === song.album_artist &&
+					s.path !== song.path &&
+					!queue.includes(s) &&
+					(s.track_number ?? 0) > (song.track_number ?? 0),
+			)
+			.sort((a, b) => {
+				// sort by disc number first
+				const adiscNum = a.disc_number ?? 0;
+				const bdiscNum = b.disc_number ?? 0;
+				if (adiscNum !== bdiscNum) return adiscNum - bdiscNum;
+				// then by track number
+				const atrackNum = a.track_number ?? 0;
+				const btrackNum = b.track_number ?? 0;
+				return atrackNum - btrackNum;
+			});
+		console.log({ songsToAddToQueue: albumSongs });
+		set(queueAtom, albumSongs);
+	},
 );
 
 export const songHistoryAtom = atom<RawSong[]>([]);
