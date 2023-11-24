@@ -7,7 +7,7 @@ import { atomEffect } from "jotai-effect";
 import { queueAtom } from "./queue";
 
 // const libraryAtom = atomWithStorage<RawSong[]>("library", []);
-const libraryAtom = atom<RawSong[]>([]);
+export const libraryAtom = atom<RawSong[]>([]);
 const searchAtom = atom<string>("");
 export const selectedSongAtom = atom<RawSong | null>(null);
 const _loadedSongAtom = atom<RawSong | null>(null);
@@ -118,7 +118,7 @@ export function useSearch() {
 //   return [...useAtom(sortedLibraryAtom)] as const;
 // }
 
-const filteredLibraryAtom = atom((get) => {
+export const filteredLibraryAtom = atom((get) => {
   const library = get(libraryAtom);
   const search = get(searchAtom);
   if (search === "") return library;

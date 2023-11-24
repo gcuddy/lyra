@@ -55,6 +55,7 @@ export default function TopBar() {
   const [loadedSong, setLoadedSong] = useLoadedSong();
   const [playing, setPlaying] = usePlaying();
   const [audio, setAudio] = useAudioPlayer();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [library] = useLibrary();
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -112,34 +113,26 @@ export default function TopBar() {
     if (!audio?.audio) return;
     setDuration(audio.audio.duration);
   }
+
   useEffect(() => {
-    if (!audio?.audio) {
-      const _audio = new AudioPlayer();
-      setAudio(_audio);
-    }
-    if (audio?.audio) {
-      audio.audio.addEventListener("pause", pause);
-      audio.audio.addEventListener("play", play);
-      audio.audio.addEventListener("ended", ended);
-      audio.audio.addEventListener("loadedmetadata", loadmetadata);
-      audio.audio.addEventListener("timeupdate", (e) => {
-        setTime(audio.audio?.currentTime ?? 0);
-      });
-    }
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    audio.addEventListener("ended", playNext);
+    audio.addEventListener("loadedmetadata", loadmetadata);
+    // TODO: raf for timeupdate
+    audio.addEventListener("timeupdate", (e) => {
+      setTime(audio.currentTime ?? 0);
+    });
 
     return () => {
-      if (audio?.audio) {
-        audio.audio.removeEventListener("pause", pause);
-        audio.audio.removeEventListener("play", play);
-        audio.audio.removeEventListener("ended", ended);
-        audio.audio.removeEventListener("loadedmetadata", loadmetadata);
-        audio.audio.removeEventListener("timeupdate", (e) => {
-          setTime(audio.audio?.currentTime ?? 0);
-        });
-        // audio?.audio.srcObject = null;
-      }
+      audio.removeEventListener("ended", playNext);
+      audio.removeEventListener("loadedmetadata", loadmetadata);
+      audio.removeEventListener("timeupdate", (e) => {
+        setTime(audio.currentTime ?? 0);
+      });
     };
-  }, [audio, pause, play, ended, loadmetadata, setAudio]);
+  }, []);
 
   useEffect(() => {
     console.log("running audio listen");

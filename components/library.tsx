@@ -29,7 +29,9 @@ import BasicSticky from "react-sticky-el";
 
 import { useAudioPlayer } from "@/atoms/audio";
 import {
+  filteredLibraryAtom,
   filteredLibraryCountAtom,
+  libraryAtom,
   loadableLoadedImageDataUrl,
   selectedSongAtom,
   setLoadedSongAndUpdateQueue,
@@ -74,26 +76,21 @@ export const BOTTOM_BAR_HEIGHT = 32;
 export default function Library({ path, scrollElement }: LibraryProps) {
   console.log("rendering library", path);
   // read directory
-  const [fileEntries, setFileEntries] = useState<FileEntry[]>();
   const [isParsing, setIsParsing] = useState(false);
-  const [musicFiles, setMusicFiles] = usePaths();
-  const [library] = useFilteredLibrary();
-  const [, setLibrary] = useLibrary();
+  const [musicFiles, setMusicFiles] = useState<string[]>([]);
+  const library = useAtomValue(filteredLibraryAtom);
+  const setLibrary = useSetAtom(libraryAtom);
   const parentRef = useRef<HTMLDivElement>(null);
-  const [playing, setPlaying] = usePlaying();
-  const [audio] = useAudioPlayer();
   const [listOffset, setListOffset] = useState(0);
-  const [selectedSong, setSelectedSong] = useSelectedSong();
+  const selectedSong = useAtomValue(selectedSongAtom);
   const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
-  const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
 
   //   const [sort, setSort] = useSort();
   //   console.log({ sort });
 
   const { table } = useTable({ data: library });
 
-  const { columnVisibility, columnSizing } = table.getState();
-  const { rows, rowsById } = table.getRowModel();
+  const { rows } = table.getRowModel();
 
   //   or rows.length?
   const count = library?.length || 0;
@@ -104,7 +101,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     left: 16,
     right: 16,
   };
-  const [top, setTop] = useState(256);
+  //   const [top, setTop] = useState(256);
 
   const rowVirtualizer = useVirtualizer({
     count,
@@ -156,35 +153,25 @@ export default function Library({ path, scrollElement }: LibraryProps) {
     setIsParsing(false);
   }
 
-  async function readDirectory() {
-    const dir = await readDir(path, {
-      recursive: true,
-    });
-    console.log({ dir });
-    const files = parseMusicFiles(dir);
-    console.log({ files });
-    setMusicFiles(files);
-    fn_parse();
-    // const metadata = await Promise.all(
-    //   files.map((file) => invoke("read_music_file", { path: file }))
-    // );
-
-    // does this work?
-
-    // take two
-
-    // console.log({ metadata });
-  }
-
+  // this is an unpleasant pattern i should review
   useEffect(() => {
+    async function readDirectory() {
+      const dir = await readDir(path, {
+        recursive: true,
+      });
+      console.log({ dir });
+      const files = parseMusicFiles(dir);
+      console.log({ files });
+      setMusicFiles(files);
+      fn_parse();
+    }
     readDirectory();
-  }, [readDirectory]);
+  }, [path]);
 
   //   if (isParsing) {
   //     return <div>Reading music files...</div>;
   //   }
 
-  const virtualRows = rowVirtualizer.getVirtualItems();
   useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
   useEffect(() => {
@@ -323,8 +310,6 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
                 if (!row) return <></>;
 
-                // TODO: selected magic here
-
                 return (
                   <div
                     key={row.id}
@@ -336,7 +321,6 @@ export default function Library({ path, scrollElement }: LibraryProps) {
                       }px)`,
                     }}
                   >
-                    {/* todo: selected indicator */}
                     <div
                       className={cn(
                         "absolute inset-0 rounded-md border",
