@@ -101,16 +101,19 @@ export default function TopBar() {
 		};
 	}, [playNext]);
 
+
+    // another solution would be to extract the logic into another function so we don't re-run this effect when loadedSong changes
 	useEffect(() => {
-		console.log("running audio listen");
-		const unlisten = listen("play", (e) => {
-			setPlaying((currentPlaying) => !currentPlaying);
+		const unlisten = listen("play", () => {
+			if (loadedSong) {
+				setPlaying((currentPlaying) => !currentPlaying);
+			}
 		});
 
 		return () => {
 			unlisten.then((f) => f());
 		};
-	}, [setPlaying]);
+	}, [setPlaying, loadedSong]);
 
 	useEffect(() => {
 		if (audioRef.current) {
