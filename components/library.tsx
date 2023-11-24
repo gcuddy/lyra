@@ -18,6 +18,7 @@ import BasicSticky from "react-sticky-el";
 import { useAudioPlayer } from "@/atoms/audio";
 import {
   filteredLibraryCountAtom,
+  selectedSongAtom,
   setLoadedSongAndUpdateQueue,
   useFilteredLibrary,
   useLibrary,
@@ -37,9 +38,11 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { For } from "million/react";
 import { cn } from "@/lib/utils";
+import { leftSidebarWidthAtom } from "@/atoms/sizes";
+import { Button } from "./ui/button";
 
 interface LibraryProps {
   path: string;
@@ -60,6 +63,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const [playing, setPlaying] = usePlaying();
   const [audio] = useAudioPlayer();
   const [listOffset, setListOffset] = useState(0);
+  const [selectedSong, setSelectedSong] = useSelectedSong();
+  const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
 
   //   const [sort, setSort] = useSort();
   //   console.log({ sort });
@@ -274,6 +279,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
                 const row = rows[virtualItem.index];
 
+                const selected = selectedSong?.id === row?.id;
+
                 if (!row) return <></>;
 
                 // TODO: selected magic here
@@ -293,7 +300,10 @@ export default function Library({ path, scrollElement }: LibraryProps) {
                     <div
                       className={cn(
                         "absolute inset-0 rounded-md border",
-                        virtualItem.index % 2 === 0 && "bg-app-darkBox"
+                        virtualItem.index % 2 === 0 && "bg-app-darkBox",
+                        selected
+                          ? "border-accent !bg-accent/10"
+                          : "border-transparent"
                       )}
                     >
                       <LibraryItem
@@ -358,20 +368,22 @@ function Inspector({ scrollElement }: { scrollElement?: HTMLElement | null }) {
 
 function BottomBar() {
   const [filteredLibraryCount] = useAtom(filteredLibraryCountAtom);
+  const leftSidebarWidth = useAtomValue(leftSidebarWidthAtom);
   return (
     <div
       className="fixed bottom-0 z-10 bg-app/80 flex justify-between items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
       style={{
         height: BOTTOM_BAR_HEIGHT,
+        width: `calc(100% - ${leftSidebarWidth}px`,
       }}
     >
       <div className="flex-grow">
         <span>{filteredLibraryCount} songs</span>
       </div>
       <div>
-        <button>
-          <Info className="shrink-0" />
-        </button>
+        <Button variant="subtle" size="icon">
+          <Info className="shrink-0 h-4 w-4" />
+        </Button>
       </div>
       {/* <div className="flex-grow">
             <span>0:00</span>
@@ -394,7 +406,7 @@ const LibraryItem = memo(
     paddingRight: number;
   }) => {
     console.log("rendering library item", row.original.id);
-    const [selectedSong, setSelectedSong] = useSelectedSong();
+    const setSelectedSong = useSetAtom(selectedSongAtom);
     const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
     return (
       <>
@@ -406,16 +418,14 @@ const LibraryItem = memo(
             setLoadedSong(row.original);
           }}
           // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
-          className={`relative flex h-full items-center ${
-            selectedSong?.id === row?.id ? "bg-blue-500 text-white" : ""
-          }`}
+          className={`relative flex h-full items-center`}
         >
           {row.getVisibleCells().map((cell) => {
             return (
               <div
                 role="cell"
                 key={cell.id}
-                className="table-cell shrink-0 px-4 text-xs truncate"
+                className="table-cell shrink-0 px-4 text-xs truncate cursor-default"
                 style={{ width: cell.column.getSize() }}
               >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}

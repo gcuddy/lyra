@@ -6,7 +6,8 @@ import { atomEffect } from "jotai-effect";
 
 import { queueAtom } from "./queue";
 
-const libraryAtom = atomWithStorage<RawSong[]>("library", []);
+// const libraryAtom = atomWithStorage<RawSong[]>("library", []);
+const libraryAtom = atom<RawSong[]>([]);
 const searchAtom = atom<string>("");
 export const selectedSongAtom = atom<RawSong | null>(null);
 const _loadedSongAtom = atom<RawSong | null>(null);
@@ -19,7 +20,7 @@ const playingAtom = atom(false);
 export const setLoadedSongAndUpdateQueue = atom(
   null,
   (get, set, song: RawSong) => {
-    console.log({ song });
+    console.log(`settingloadedsongandupdatingqueue`, { song });
     // TODO: add prefs of how to handle queue-ing
     set(loadedSongAtom, song);
     const library = get(libraryAtom);
@@ -44,6 +45,7 @@ export const setLoadedSongAndUpdateQueue = atom(
         const btrackNum = b.track_number ?? 0;
         return atrackNum - btrackNum;
       });
+    console.log({ songsToAddToQueue: albumSongs });
     set(queueAtom, albumSongs);
   }
 );

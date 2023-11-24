@@ -94,12 +94,14 @@ export default function TopBar() {
 
   //   TODO: ended
   function ended() {
+    playNext();
     if (loadedSong && audio?.audio) {
-      const idx = library.findIndex((s) => s.id === loadedSong.id);
-      if (idx === -1) return;
-      const nextSong = library[idx + 1];
-      if (!nextSong) return;
-      setLoadedSong(nextSong);
+      //   const idx = library.findIndex((s) => s.id === loadedSong.id);
+      //   console.log({ idx });
+      //   if (idx === -1) return;
+      //   const nextSong = library[idx + 1];
+      //   if (!nextSong) return;
+      //   setLoadedSong(nextSong);
       //   const src = convertFileSrc(nextSong.path);
       //   audio.audio.src = src;
       //   play();

@@ -88,9 +88,9 @@ export default function App({ Component, pageProps }: AppProps) {
       <TopBar />
       <div
         ref={setMainScrollRef}
-        className="grid grid-cols-5 grow h-[calc(100%-80px)] w-full"
+        className="flex grow h-[calc(100%-80px)] w-full"
       >
-        <div style={{}} className="flex flex-col basis-1/4 max-w-xs">
+        <div style={{}} className="flex flex-col">
           <SourceList />
         </div>
         <Component {...pageProps} />

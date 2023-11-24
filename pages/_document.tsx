@@ -5,7 +5,7 @@ export default function Document() {
   return (
     <Html lang="en" className="light">
       <Head />
-      <body className="bg-app">
+      <body className="bg-app overflow-hidden overscroll-none">
         <Main />
         <NextScript />
       </body>
