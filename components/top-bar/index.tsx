@@ -142,6 +142,7 @@ export default function TopBar() {
 						<SkipBack className="relative h-5 w-5" />
 					</Button>
 					<Button
+						disabled={!loadedSong}
 						onClick={() => {
 							setPlaying(!playing);
 						}}
@@ -219,10 +220,15 @@ function CovertArt() {
 
 	return (
 		<div className="flex h-14 rounded-[inherit] aspect-square object-cover flex-col items-center justify-center">
-			{loadedImageDataUrlState.state === "hasData" ? (
-				<img alt="" src={loadedImageDataUrlState.data} />
+			{loadedImageDataUrlState.state === "hasData" &&
+			loadedImageDataUrlState.data ? (
+				<img
+					alt=""
+					className="h-full w-full object-cover object-center"
+					src={loadedImageDataUrlState.data}
+				/>
 			) : (
-				<div className="h-full w-full bg-app-box" />
+				<div className="h-full w-full bg-app-darkBox" />
 			)}
 		</div>
 	);
