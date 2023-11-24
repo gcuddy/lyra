@@ -83,7 +83,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <main
-      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between ${inter.className}`}
+      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 ${inter.className}`}
     >
       <TopBar />
       <div

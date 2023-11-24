@@ -38,6 +38,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
 import { useAtom } from "jotai";
 import { For } from "million/react";
+import { cn } from "@/lib/utils";
 
 interface LibraryProps {
   path: string;
@@ -157,13 +158,13 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   //   }
 
   const virtualRows = rowVirtualizer.getVirtualItems();
-  //   useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
+  useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
   return (
     <>
       <div
         ref={parentRef}
-        className="col-span-4 bg-white dark:bg-gray-950 relative overscroll-none"
+        className="col-span-4 bg-app relative overscroll-none"
         style={{
           height: `100%`,
           width: "100%",
@@ -288,11 +289,18 @@ export default function Library({ path, scrollElement }: LibraryProps) {
                     }}
                   >
                     {/* todo: selected indicator */}
-                    <LibraryItem
-                      row={row}
-                      paddingLeft={padding.left}
-                      paddingRight={padding.right}
-                    />
+                    <div
+                      className={cn(
+                        "absolute inset-0 rounded-md border",
+                        virtualItem.index % 2 === 0 && "bg-app-darkBox"
+                      )}
+                    >
+                      <LibraryItem
+                        row={row}
+                        paddingLeft={padding.left}
+                        paddingRight={padding.right}
+                      />
+                    </div>
                   </div>
                 );
               }}

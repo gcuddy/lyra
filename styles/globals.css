@@ -13,9 +13,9 @@
 
   --color-black: 0, 0%, 0%;
   --color-white: 0, 0%, 100%;
-  --color-accent: 208, 100%, 57%;
-  --color-accent-faint: 208, 100%, 64%;
-  --color-accent-deep: 208, 100%, 47%;
+  --color-accent: calc(var(--dark-hue) - 27), 100%, 57%;
+  --color-accent-faint: calc(var(--dark-hue) - 27), 100%, 64%;
+  --color-accent-deep: calc(var(--dark-hue) - 27), 100%, 47%;
   --color-ink: var(--dark-hue), 0%, 100%;
   --color-ink-dull: var(--dark-hue), 10%, 70%;
   --color-ink-faint: var(--dark-hue), 10%, 55%;

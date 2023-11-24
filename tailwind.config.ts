@@ -31,6 +31,7 @@ const config: Config = {
           divider: alpha("--color-app-divider"),
           selected: alpha("--color-app-selected"),
           box: alpha("--color-app-box"),
+          darkBox: alpha("--color-app-dark-box"),
         },
         ink: {
           DEFAULT: alpha("--color-ink"),
