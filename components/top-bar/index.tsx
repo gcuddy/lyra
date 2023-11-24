@@ -79,7 +79,7 @@ export default function TopBar() {
     audio.audio.src = src;
     audio.audio.currentTime = 0;
     play();
-  }, [loadedSong]);
+  }, [loadedSong, audio, play]);
 
   //   TODO: should these move into a hook?
   function pause() {
@@ -139,7 +139,7 @@ export default function TopBar() {
         // audio?.audio.srcObject = null;
       }
     };
-  }, []);
+  }, [audio, pause, play, ended, loadmetadata, setAudio]);
 
   useEffect(() => {
     console.log("running audio listen");
@@ -157,7 +157,7 @@ export default function TopBar() {
     return () => {
       unlisten.then((f) => f());
     };
-  }, [audio]);
+  }, [audio, setPlaying]);
 
   useEffect(() => {
     if (audio?.audio) {

@@ -10,14 +10,15 @@ type RawSong = {
   album_artist: string;
   album_title: string;
   genre?: string;
-  audio_bitrate?: number;
-  overall_bitrate?: number;
-  duration_ms?: number;
   track_number?: number;
   track_total?: number;
   disc_number?: number;
   disc_total?: number;
   year?: number;
+  //   properties
+  audio_bitrate?: number;
+  overall_bitrate?: number;
+  duration_ms?: number;
 };
 
 type Picture = {

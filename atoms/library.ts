@@ -204,7 +204,7 @@ const loadedImageDataUrl = atom(async (get) => {
   return dataURL;
 });
 
-const loadableLoadedImageDataUrl = loadable(loadedImageDataUrl);
+export const loadableLoadedImageDataUrl = loadable(loadedImageDataUrl);
 
 export function useLoadedImageDataUrl() {
   return [...useAtom(loadableLoadedImageDataUrl)] as const;

@@ -19,7 +19,7 @@ export default function Settings() {
     return () => {
       document.removeEventListener("keydown", handleEsc);
     };
-  }, []);
+  }, [router]);
 
   return (
     <div>

@@ -82,7 +82,7 @@ export const Button = forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
   ButtonProps | LinkButtonProps
 >(({ className, ...props }, ref) => {
-  className = cx(buttonStyles(props), className);
+  className = cn(buttonStyles(props), className);
   return hasHref(props) ? (
     <a
       {...props}
@@ -98,6 +98,8 @@ export const Button = forwardRef<
     />
   );
 });
+
+Button.displayName = "Button";
 
 export const ButtonLink = forwardRef<
   HTMLAnchorElement,
@@ -118,3 +120,5 @@ export const ButtonLink = forwardRef<
     />
   );
 });
+
+ButtonLink.displayName = "ButtonLink";

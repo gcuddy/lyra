@@ -15,6 +15,7 @@ import { useMainScrollRef } from "@/atoms/refs";
 import dynamic from "next/dynamic";
 import { listen } from "@tauri-apps/api/event";
 import { useRouter } from "next/router";
+import { TooltipProvider } from "@/components/ui/tooltip";
 const SourceList = dynamic(() => import("@/components/source-list"), {
   ssr: false,
 });
@@ -60,7 +61,7 @@ export default function App({ Component, pageProps }: AppProps) {
     setupAppWindow();
     setIsAppWindowSetup(true);
     getInitialDirectoryPath();
-  }, []);
+  }, [isAppWindowSetup, getInitialDirectoryPath]);
 
   const router = useRouter();
 
@@ -69,7 +70,7 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => {
       unlistener.then((unlisten) => unlisten());
     };
-  }, []);
+  }, [getAndSetDirectory]);
 
   useEffect(() => {
     const unlistener = listen("preferences", () => {
@@ -82,24 +83,26 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router]);
 
   return (
-    <main
-      className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
-    >
-      <TopBar />
-      <div
-        ref={setMainScrollRef}
-        className="flex grow h-[calc(100%-80px)] w-full"
+    <TooltipProvider>
+      <main
+        className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
       >
-        <div style={{}} className="flex flex-col">
-          <SourceList />
-        </div>
-        <Component {...pageProps} />
-        {/* <div
+        <TopBar />
+        <div
+          ref={setMainScrollRef}
+          className="flex grow h-[calc(100%-80px)] w-full"
+        >
+          <div style={{}} className="flex flex-col">
+            <SourceList />
+          </div>
+          <Component {...pageProps} />
+          {/* <div
           ref={setMainScrollRef}
           className="flex col-span-3 lg:col-span-4 flex-col pointer-events-auto"
         >
         </div> */}
-      </div>
-    </main>
+        </div>
+      </main>
+    </TooltipProvider>
   );
 }

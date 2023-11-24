@@ -1,10 +1,22 @@
-import { CaretDown, CaretUp, Info } from "@phosphor-icons/react";
+import {
+  CaretDown,
+  CaretUp,
+  Info,
+  MicrophoneStage,
+  MusicNoteSimple,
+  VinylRecord,
+  type Icon as PhosphorIcon,
+  Guitar,
+} from "@phosphor-icons/react";
 
 import { usePaths } from "@/atoms/paths";
 import { readDir, type FileEntry } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { produce } from "immer";
 import {
+  ReactNode,
+  Ref,
+  RefObject,
   memo,
   useCallback,
   useEffect,
@@ -18,12 +30,15 @@ import BasicSticky from "react-sticky-el";
 import { useAudioPlayer } from "@/atoms/audio";
 import {
   filteredLibraryCountAtom,
+  loadableLoadedImageDataUrl,
   selectedSongAtom,
   setLoadedSongAndUpdateQueue,
   useFilteredLibrary,
   useLibrary,
+  useLoadedImageDataUrl,
   useLoadedSong,
   usePlaying,
+  useSelectedImageDataUrl,
   useSelectedSong,
 } from "@/atoms/library";
 import { useTable } from "@/view/table";
@@ -43,6 +58,11 @@ import { For } from "million/react";
 import { cn } from "@/lib/utils";
 import { leftSidebarWidthAtom } from "@/atoms/sizes";
 import { Button } from "./ui/button";
+import { isInspectorOpenAtom } from "@/atoms/inspector";
+import { tw } from "@/lib/tailwind";
+import { Tooltip } from "./ui/tooltip";
+import { format } from "date-fns";
+import { emit } from "@tauri-apps/api/event";
 
 interface LibraryProps {
   path: string;
@@ -64,6 +84,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const [audio] = useAudioPlayer();
   const [listOffset, setListOffset] = useState(0);
   const [selectedSong, setSelectedSong] = useSelectedSong();
+  const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
   const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
 
   //   const [sort, setSort] = useSort();
@@ -157,7 +178,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 
   useEffect(() => {
     readDirectory();
-  }, []);
+  }, [readDirectory]);
 
   //   if (isParsing) {
   //     return <div>Reading music files...</div>;
@@ -166,16 +187,35 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   const virtualRows = rowVirtualizer.getVirtualItems();
   useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
+  useEffect(() => {
+    function listen(event: KeyboardEvent) {
+      if (event.key === " ") {
+        // look into it
+        console.log({ event });
+        // TODO: prevent scroll (might involve setting overflow-hidden/auto)
+      }
+    }
+
+    window.addEventListener("keydown", listen);
+    return () => {
+      window.removeEventListener("keydown", listen);
+    };
+  }, []);
+
   return (
-    <>
+    <div className="flex flex-1 w-full overflow-hidden">
       <div
         ref={parentRef}
-        className="col-span-4 bg-app relative overscroll-none"
+        onKeyDown={(e) => {
+          console.log({ e });
+        }}
+        className=" bg-app relative overscroll-none"
         style={{
           height: `100%`,
           width: "100%",
           overflow: "auto",
           pointerEvents: "auto",
+          paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
         }}
       >
         {/* <button
@@ -320,55 +360,121 @@ export default function Library({ path, scrollElement }: LibraryProps) {
           <BottomBar />
         </div>
       </div>
-      {/* <button
-        onClick={() => {
-          readDirectory();
-        }}
-      >
-        Re-sync
-      </button> */}
-      {/* <div className="pointer-events-auto">
-        <button
-          onClick={() => {
-            fn_parse();
-          }}
-        >
-          Parse with Rust
-        </button>
-        <button
-          onClick={() => {
-            js_parse();
-          }}
-        >
-          Parse with JS
-        </button>
-      </div>
-      <span>
-        You have {musicFiles.length} music files in {path}
-      </span> */}
-      {/* {JSON.stringify(library)} */}
-    </>
+      {isInspectorOpen && <Inspector scrollElement={parentRef} />}
+    </div>
   );
 }
 
-export const INSPECTOR_WIDTH = 256;
+export const INSPECTOR_WIDTH = 260;
 
-function Inspector({ scrollElement }: { scrollElement?: HTMLElement | null }) {
-  <BasicSticky scrollElement={scrollElement ?? undefined}>
-    <div
-      style={{
-        width: INSPECTOR_WIDTH,
-      }}
-      className="flex select-text flex-col overflow-hidden rounded-lg border border-app-line bg-app-box py-0.5 shadow-app-shade/10"
-    >
-      Metadata
-    </div>
-  </BasicSticky>;
+export const MetaContainer = tw.div`flex flex-col px-4 py-2 gap-1`;
+export const MetaTitle = tw.h5`text-xs font-bold text-ink`;
+
+function Inspector({
+  scrollElement,
+}: {
+  scrollElement: RefObject<HTMLElement>;
+}) {
+  const selectedSong = useAtomValue(selectedSongAtom);
+  const [selectedImageDataUrl] = useSelectedImageDataUrl();
+
+  return (
+    <BasicSticky scrollElement={scrollElement?.current ?? undefined}>
+      <div
+        style={{
+          width: INSPECTOR_WIDTH,
+          paddingBottom: BOTTOM_BAR_HEIGHT,
+        }}
+        className="absolute right-1.5 flex flex-col gap-2 top-0 pl-3 pr-1.5"
+      >
+        <div className="aspect-square">
+          {selectedImageDataUrl.state === "hasData" &&
+          selectedImageDataUrl.data ? (
+            <img
+              className="h-full w-full object-contain"
+              src={selectedImageDataUrl.data}
+            />
+          ) : (
+            <div className="bg-app-darkBox h-full w-full" />
+          )}
+        </div>
+        <div className="border border-app-line shadow-app-shade/10 bg-app-box rounded-lg py-0.5 pointer-events-auto flex select-text flex-col overflow-hidden ">
+          <MetaContainer>
+            <MetaData
+              label="Artist"
+              icon={MicrophoneStage}
+              value={selectedSong?.artist}
+            />
+            <MetaData
+              label="Title"
+              icon={MusicNoteSimple}
+              value={selectedSong?.title}
+            />
+            <MetaData
+              label="Album"
+              icon={VinylRecord}
+              value={selectedSong?.album_title}
+            />
+            <MetaData label="Genre" icon={Guitar} value={selectedSong?.genre} />
+          </MetaContainer>
+          <MetaContainer>
+            <MetaData label="Year" value={selectedSong?.year} />
+            <MetaData
+              label="Disc"
+              value={`${selectedSong?.disc_number} of ${selectedSong?.disc_total}`}
+            />
+            <MetaData
+              label="Track"
+              value={`${selectedSong?.track_number} of ${selectedSong?.track_total}`}
+            />
+          </MetaContainer>
+          <MetaContainer>
+            <MetaTitle>Properties</MetaTitle>
+            <MetaData
+              label="Duration"
+              value={format(selectedSong?.duration_ms ?? 0, "mm:ss")}
+            />
+            <MetaData
+              label="Bitrate"
+              value={`${selectedSong?.audio_bitrate} kbps`}
+            />
+          </MetaContainer>
+        </div>
+      </div>
+    </BasicSticky>
+  );
 }
+interface MetaDataProps {
+  icon?: PhosphorIcon;
+  label: string;
+  value: ReactNode;
+  tooltipValue?: ReactNode;
+  onClick?: () => void;
+}
+
+// TODO: edit prop and tooltip
+export const MetaData = ({
+  icon: Icon,
+  label,
+  value,
+  tooltipValue,
+  onClick,
+}: MetaDataProps) => {
+  return (
+    <div className="flex items-center text-xs text-ink-dull" onClick={onClick}>
+      {Icon && <Icon weight="bold" className="mr-2 shrink-0" />}
+      <span className="mr-2 flex-1 whitespace-nowrap">{label}</span>
+      <Tooltip label={tooltipValue || value} asChild>
+        <span className="truncate break-all text-ink">{value ?? "--"}</span>
+      </Tooltip>
+    </div>
+  );
+};
 
 function BottomBar() {
   const [filteredLibraryCount] = useAtom(filteredLibraryCountAtom);
   const leftSidebarWidth = useAtomValue(leftSidebarWidthAtom);
+  const [isInspectorOpen, setIsInspectorOpen] = useAtom(isInspectorOpenAtom);
   return (
     <div
       className="fixed bottom-0 z-10 bg-app/80 flex justify-between items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
@@ -381,7 +487,14 @@ function BottomBar() {
         <span>{filteredLibraryCount} songs</span>
       </div>
       <div>
-        <Button variant="subtle" size="icon">
+        <Button
+          onClick={() => {
+            setIsInspectorOpen(!isInspectorOpen);
+          }}
+          variant="subtle"
+          size="icon"
+          className={cn(isInspectorOpen && "bg-app-selected/50")}
+        >
           <Info className="shrink-0 h-4 w-4" />
         </Button>
       </div>
@@ -395,51 +508,49 @@ function BottomBar() {
   );
 }
 
-const LibraryItem = memo(
-  ({
-    row,
-    paddingLeft = 0,
-    paddingRight = 0,
-  }: {
-    row: Row<RawSong>;
-    paddingLeft: number;
-    paddingRight: number;
-  }) => {
-    console.log("rendering library item", row.original.id);
-    const setSelectedSong = useSetAtom(selectedSongAtom);
-    const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
-    return (
-      <>
-        <div
-          onClick={() => {
-            setSelectedSong(row.original);
-          }}
-          onDoubleClick={() => {
-            setLoadedSong(row.original);
-          }}
-          // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
-          className={`relative flex h-full items-center`}
-        >
-          {row.getVisibleCells().map((cell) => {
-            return (
-              <div
-                role="cell"
-                key={cell.id}
-                className="table-cell shrink-0 px-4 text-xs truncate cursor-default"
-                style={{ width: cell.column.getSize() }}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </div>
-            );
-          })}
-          {/* <span className="truncate">{song?.title}</span>
+const LibraryItem = memo(function LibraryItem({
+  row,
+  paddingLeft = 0,
+  paddingRight = 0,
+}: {
+  row: Row<RawSong>;
+  paddingLeft: number;
+  paddingRight: number;
+}) {
+  console.log("rendering library item", row.original.id);
+  const setSelectedSong = useSetAtom(selectedSongAtom);
+  const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
+  return (
+    <>
+      <div
+        onClick={() => {
+          setSelectedSong(row.original);
+        }}
+        onDoubleClick={() => {
+          setLoadedSong(row.original);
+        }}
+        // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
+        className={`relative flex h-full items-center`}
+      >
+        {row.getVisibleCells().map((cell) => {
+          return (
+            <div
+              role="cell"
+              key={cell.id}
+              className="table-cell shrink-0 px-4 text-xs truncate cursor-default"
+              style={{ width: cell.column.getSize() }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </div>
+          );
+        })}
+        {/* <span className="truncate">{song?.title}</span>
         <span className="truncate">{song.artist}</span>
         <span className="truncate">{song.album_title}</span> */}
-        </div>
-      </>
-    );
-  }
-);
+      </div>
+    </>
+  );
+});
 
 function Table({ data = [] }: { data: RawSong[] }) {
   const parentRef = useRef<HTMLTableElement>(null);

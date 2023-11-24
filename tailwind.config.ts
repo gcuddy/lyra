@@ -32,6 +32,7 @@ const config: Config = {
           selected: alpha("--color-app-selected"),
           box: alpha("--color-app-box"),
           darkBox: alpha("--color-app-dark-box"),
+          shade: alpha("--color-app-shade"),
         },
         ink: {
           DEFAULT: alpha("--color-ink"),
