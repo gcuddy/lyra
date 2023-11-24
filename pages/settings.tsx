@@ -1,9 +1,26 @@
 import { useThemePreferences } from "@/atoms/preferences";
 import { Slider } from "@/components/ui/slider";
 import { changeHueValue } from "@/hooks/useTheme";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 export default function Settings() {
+  const router = useRouter();
   const [themePrefs, setThemePrefs] = useThemePreferences();
+
+  useEffect(() => {
+    // escape key goes back
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        router.back();
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
+
   return (
     <div>
       <h1>Settings</h1>
