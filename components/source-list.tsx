@@ -6,8 +6,11 @@ import { useAtom } from "jotai";
 import Link from "next/link";
 import NavLink from "./sidebar/link";
 import { HiMiniMusicalNote } from "react-icons/hi2";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SourceList() {
+  // we call here because this component is not rendered on the server
+  useTheme();
   const [source, setSource] = useSourceOpen();
 
   const [selectedSong] = useSelectedSong();

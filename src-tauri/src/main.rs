@@ -7,7 +7,7 @@ use nanoid::nanoid;
 use rayon::prelude::*;
 use std::fs::File;
 use std::path::Path;
-use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Submenu};
+use tauri::{AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu};
 
 // use symphonia::core::codecs::{DecoderOptions, FinalizeResult, CODEC_TYPE_NULL};
 // use symphonia::core::formats::{FormatOptions, FormatReader, Track};
@@ -53,13 +53,26 @@ fn main() {
             .add_native_item(MenuItem::Copy)
             .add_native_item(MenuItem::Paste)
             .add_native_item(MenuItem::SelectAll)
-            .add_item(CustomMenuItem::new("find", "Find").accelerator("CmdOrCtrl+F"))
-            ,
+            .add_item(CustomMenuItem::new("find", "Find").accelerator("CmdOrCtrl+F")),
     );
 
+    let about_menu = Menu::new()
+        .add_native_item(MenuItem::About("rtunes".to_string(), AboutMetadata::new()))
+        .add_native_item(MenuItem::Separator)
+        .add_item(CustomMenuItem::new("preferences", "Preferences").accelerator("CmdOrCtrl+,"))
+        .add_native_item(MenuItem::Separator)
+        .add_native_item(MenuItem::Services)
+        .add_native_item(MenuItem::Separator)
+        .add_native_item(MenuItem::Hide)
+        .add_native_item(MenuItem::HideOthers)
+        .add_native_item(MenuItem::ShowAll)
+        .add_native_item(MenuItem::Separator)
+        .add_native_item(MenuItem::Quit);
+
     let menu = Menu::new()
-        .add_native_item(MenuItem::Copy)
-        .add_item(CustomMenuItem::new("hide", "Hide"))
+        // .add_native_item(MenuItem::Copy)
+        // .add_item(CustomMenuItem::new("hide", "Hide")))
+        .add_submenu(Submenu::new("rtunes", about_menu))
         .add_submenu(submenu)
         .add_submenu(edit_submenu)
         .add_submenu(controls);
@@ -72,6 +85,9 @@ fn main() {
             "openDirectory" => {
                 event.window().emit("openDirectory", 1).unwrap();
             }
+            "preferences" => {
+                event.window().emit("preferences", 1).unwrap();
+            }
             "quit" => {
                 std::process::exit(0);
             }
@@ -80,9 +96,6 @@ fn main() {
             }
             "play" => {
                 event.window().emit("play", 1).unwrap();
-            }
-            "hide" => {
-                event.window().hide().unwrap();
             }
             "find" => {
                 event.window().emit("find", 1).unwrap();

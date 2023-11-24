@@ -13,6 +13,8 @@ import { Store } from "tauri-plugin-store-api";
 import { useDirectoryPath } from "@/atoms/paths";
 import { useMainScrollRef } from "@/atoms/refs";
 import dynamic from "next/dynamic";
+import { listen } from "@tauri-apps/api/event";
+import { useRouter } from "next/router";
 const SourceList = dynamic(() => import("@/components/source-list"), {
   ssr: false,
 });
@@ -60,21 +62,25 @@ export default function App({ Component, pageProps }: AppProps) {
     getInitialDirectoryPath();
   }, []);
 
+  const router = useRouter();
+
   useEffect(() => {
-    if (directoryListener) {
-      directoryListener.then((unlistener) => {
-        unlistener();
-        const newUnlistener = appWindow?.listen(
-          "openDirectory",
-          getAndSetDirectory
-        );
-        setDirectoryListener(newUnlistener);
-      });
-    }
-    const unlistener = appWindow?.listen("openDirectory", getAndSetDirectory);
-    setDirectoryListener(unlistener);
-    console.log("set directory listener");
-  }, [appWindow]);
+    const unlistener = listen("openDirectory", getAndSetDirectory);
+    return () => {
+      unlistener.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
+    const unlistener = listen("preferences", () => {
+      router.push("/settings");
+    });
+
+    return () => {
+      unlistener.then((unlisten) => unlisten());
+    };
+  }, [router]);
+
   return (
     <main
       className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between ${inter.className}`}
@@ -84,7 +90,7 @@ export default function App({ Component, pageProps }: AppProps) {
         ref={setMainScrollRef}
         className="grid grid-cols-5 grow h-[calc(100%-64px)] w-full"
       >
-        <div className="flex flex-col basis-1/4 max-w-xs">
+        <div style={{}} className="flex flex-col basis-1/4 max-w-xs">
           <SourceList />
         </div>
         <Component {...pageProps} />

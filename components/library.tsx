@@ -1,10 +1,11 @@
-import { CaretDown, CaretUp } from "@phosphor-icons/react";
+import { CaretDown, CaretUp, Info } from "@phosphor-icons/react";
 
 import { usePaths } from "@/atoms/paths";
 import { readDir, type FileEntry } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { produce } from "immer";
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -331,17 +332,37 @@ export default function Library({ path, scrollElement }: LibraryProps) {
   );
 }
 
+export const INSPECTOR_WIDTH = 256;
+
+function Inspector({ scrollElement }: { scrollElement?: HTMLElement | null }) {
+  <BasicSticky scrollElement={scrollElement ?? undefined}>
+    <div
+      style={{
+        width: INSPECTOR_WIDTH,
+      }}
+      className="flex select-text flex-col overflow-hidden rounded-lg border border-app-line bg-app-box py-0.5 shadow-app-shade/10"
+    >
+      Metadata
+    </div>
+  </BasicSticky>;
+}
+
 function BottomBar() {
   const [filteredLibraryCount] = useAtom(filteredLibraryCountAtom);
   return (
     <div
-      className="fixed bottom-0 z-10 bg-app/80 flex w-full items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
+      className="fixed bottom-0 z-10 bg-app/80 flex justify-between items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
       style={{
         height: BOTTOM_BAR_HEIGHT,
       }}
     >
       <div className="flex-grow">
         <span>{filteredLibraryCount} songs</span>
+      </div>
+      <div>
+        <button>
+          <Info className="shrink-0" />
+        </button>
       </div>
       {/* <div className="flex-grow">
             <span>0:00</span>
@@ -353,50 +374,53 @@ function BottomBar() {
   );
 }
 
-function LibraryItem({
-  row,
-  paddingLeft = 0,
-  paddingRight = 0,
-}: {
-  row: Row<RawSong>;
-  paddingLeft: number;
-  paddingRight: number;
-}) {
-  const [selectedSong, setSelectedSong] = useSelectedSong();
-  const [, setLoadedSong] = useLoadedSong();
-  return (
-    <>
-      <div
-        onClick={() => {
-          setSelectedSong(row.original);
-        }}
-        onDoubleClick={() => {
-          setLoadedSong(row.original);
-        }}
-        // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
-        className={`relative flex h-full items-center ${
-          selectedSong?.id === row?.id ? "bg-blue-500 text-white" : ""
-        }`}
-      >
-        {row.getVisibleCells().map((cell) => {
-          return (
-            <div
-              role="cell"
-              key={cell.id}
-              className="table-cell shrink-0 px-4 text-xs truncate"
-              style={{ width: cell.column.getSize() }}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </div>
-          );
-        })}
-        {/* <span className="truncate">{song?.title}</span>
+const LibraryItem = memo(
+  ({
+    row,
+    paddingLeft = 0,
+    paddingRight = 0,
+  }: {
+    row: Row<RawSong>;
+    paddingLeft: number;
+    paddingRight: number;
+  }) => {
+    console.log("rendering library item", row.original.id);
+    const [selectedSong, setSelectedSong] = useSelectedSong();
+    const [, setLoadedSong] = useLoadedSong();
+    return (
+      <>
+        <div
+          onClick={() => {
+            setSelectedSong(row.original);
+          }}
+          onDoubleClick={() => {
+            setLoadedSong(row.original);
+          }}
+          // h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
+          className={`relative flex h-full items-center ${
+            selectedSong?.id === row?.id ? "bg-blue-500 text-white" : ""
+          }`}
+        >
+          {row.getVisibleCells().map((cell) => {
+            return (
+              <div
+                role="cell"
+                key={cell.id}
+                className="table-cell shrink-0 px-4 text-xs truncate"
+                style={{ width: cell.column.getSize() }}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </div>
+            );
+          })}
+          {/* <span className="truncate">{song?.title}</span>
         <span className="truncate">{song.artist}</span>
         <span className="truncate">{song.album_title}</span> */}
-      </div>
-    </>
-  );
-}
+        </div>
+      </>
+    );
+  }
+);
 
 function Table({ data = [] }: { data: RawSong[] }) {
   const parentRef = useRef<HTMLTableElement>(null);
