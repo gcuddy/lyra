@@ -5,19 +5,14 @@ use lofty::{Accessor, AudioFile, ItemKey, ItemValue, Probe, TaggedFileExt};
 use nanoid::nanoid;
 use rayon::prelude::*;
 use std::path::Path;
-use tauri::{AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu};
+use tauri::{AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu, window};
 
 use logging_timer::time;
-
 
 fn main() {
     let open_directory = CustomMenuItem::new("openDirectory".to_string(), "Open Directory");
 
-    let submenu = Submenu::new(
-        "File",
-        Menu::new()
-            .add_item(open_directory)
-    );
+    let submenu = Submenu::new("File", Menu::new().add_item(open_directory));
 
     // TODO: toggle play/pause display depending on state
     let controls = Submenu::new(
@@ -51,12 +46,16 @@ fn main() {
         .add_native_item(MenuItem::Separator)
         .add_native_item(MenuItem::Quit);
 
+    let view_menu = Menu::new()
+        .add_item(CustomMenuItem::new("inspector", "Show Inspector").accelerator("CmdOrCtrl+I"));
+
     let menu = Menu::new()
         // .add_native_item(MenuItem::Copy)
         // .add_item(CustomMenuItem::new("hide", "Hide")))
         .add_submenu(Submenu::new("rtunes", about_menu))
         .add_submenu(submenu)
         .add_submenu(edit_submenu)
+        .add_submenu(Submenu::new("View", view_menu))
         .add_submenu(controls);
 
     tauri::Builder::default()
@@ -82,10 +81,41 @@ fn main() {
             "find" => {
                 event.window().emit("find", 1).unwrap();
             }
+            "inspector" => {
+                event.window().emit("toggle-inspector", 1).unwrap();
+            }
             _ => {}
         })
+        .setup(move |app| {
+            let main_window = app.get_window("main").unwrap();
+            let menu_handle = main_window.menu_handle();
+            main_window.listen("selectionchange", move |event| {
+                let payload = event.payload().unwrap();
+                match payload {
+                    "true" => {
+                        menu_handle.get_item("inspector").set_enabled(true).ok();
+                    }
+                    _ => {
+                        menu_handle.get_item("inspector").set_enabled(false).ok();
+                    }
+                }
+            });
+            // main_window.listen("inspectorchange", move |event| {
+            //     let payload = event.payload().unwrap();
+            //     match payload {
+            //         "true" => {
+            //             menu_handle.get_item("inspector").set_checked(true).ok();
+
+            //         }
+            //         _ => {
+            //             menu_handle.get_item("inspector").set_checked(false).ok();
+            //         }
+            //     }
+            // });
+            Ok(())
+        })
         .invoke_handler(
-            tauri::generate_handler![greet, read_music_file, get_album_cover, process_music_files]
+            tauri::generate_handler![greet, read_music_file, get_album_cover, process_music_files, toggle_inspector_text]
         )
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -301,4 +331,13 @@ fn get_album_cover(path: &str) -> Option<Picture> {
 // A function that sends a message from Rust to JavaScript via a Tauri Event
 fn rs2js<R: tauri::Runtime>(message: String, manager: &impl Manager<R>) {
     manager.emit_all("rs2js", message).unwrap();
+}
+
+#[tauri::command]
+async fn toggle_inspector_text(window: tauri::Window, show: bool) {
+    window.menu_handle().get_item("inspector").set_title(if show {
+        "Hide Inspector"
+    } else {
+        "Show Inspector"
+    }).ok();
 }

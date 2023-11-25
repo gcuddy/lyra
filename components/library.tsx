@@ -39,10 +39,12 @@ import { cn } from "@/lib/utils";
 import { useTable } from "@/view/table";
 import { Row, flexRender } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { emit, listen } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { For } from "million/react";
+import { useOutsideClick } from "rooks";
 import { Button } from "./ui/button";
 import { Tooltip } from "./ui/tooltip";
 
@@ -62,8 +64,18 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 	const setLibrary = useSetAtom(libraryAtom);
 	const parentRef = useRef<HTMLDivElement>(null);
 	const [listOffset, setListOffset] = useState(0);
-	const selectedSong = useAtomValue(selectedSongAtom);
+	const [selectedSong, setSelectedSong] = useAtom(selectedSongAtom);
 	const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
+	console.log({ parentRef });
+
+	useEffect(() => {
+		emit("selectionchange", !!selectedSong);
+		// if (selectedSong) {
+		// 	// emit event to update menu item
+		// } else {
+		// 	emit("noselection");
+		// }
+	}, [selectedSong]);
 
 	//   const [sort, setSort] = useSort();
 	//   console.log({ sort });
@@ -172,6 +184,11 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 			window.removeEventListener("keydown", listen);
 		};
 	}, []);
+
+	useOutsideClick(parentRef, () => {
+		// console.log('clicked outside');
+		setSelectedSong(null);
+	});
 
 	return (
 		<div className="flex flex-1 w-full overflow-hidden">
@@ -347,8 +364,12 @@ function Inspector({
 	const selectedSong = useAtomValue(selectedSongAtom);
 	const [selectedImageDataUrl] = useSelectedImageDataUrl();
 
+	console.log({ scrollElement });
+
+	if (!scrollElement.current) return null;
+
 	return (
-		<BasicSticky scrollElement={scrollElement?.current ?? undefined}>
+		<BasicSticky scrollElement={scrollElement.current}>
 			<div
 				style={{
 					width: INSPECTOR_WIDTH,
@@ -446,6 +467,23 @@ function BottomBar() {
 	const [filteredLibraryCount] = useAtom(filteredLibraryCountAtom);
 	const leftSidebarWidth = useAtomValue(leftSidebarWidthAtom);
 	const [isInspectorOpen, setIsInspectorOpen] = useAtom(isInspectorOpenAtom);
+
+    // bizarre to handle this logic here, but whatever
+
+	useEffect(() => {
+		invoke("toggle_inspector_text", {
+			show: isInspectorOpen,
+		});
+	}, [isInspectorOpen]);
+
+	useEffect(() => {
+		const unlisten = listen("toggle-inspector", () => {
+			setIsInspectorOpen((current) => !current);
+		});
+		return () => {
+			unlisten.then((u) => u());
+		};
+	}, [setIsInspectorOpen]);
 	return (
 		<div
 			className="fixed bottom-0 z-10 bg-app/80 flex justify-between items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
