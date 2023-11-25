@@ -5,61 +5,61 @@ import { useEffect, useMemo } from "react";
 // import { usePlatform } from '..';
 
 export function changeHueValue(mode: "light" | "dark", hueValue: number) {
-  document.documentElement.style.setProperty(
-    `--${mode}-hue`,
-    hueValue.toString()
-  );
+	document.documentElement.style.setProperty(
+		`--${mode}-hue`,
+		hueValue.toString(),
+	);
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useAtom(themeAtom);
-  // const { lockAppTheme } = usePlatform();
-  const systemTheme = useMemo<MediaQueryList>(
-    () => window.matchMedia("(prefers-color-scheme: dark)"),
-    []
-  );
+	const [theme, setTheme] = useAtom(themeAtom);
+	// const { lockAppTheme } = usePlatform();
+	const systemTheme = useMemo<MediaQueryList>(
+		() => window.matchMedia("(prefers-color-scheme: dark)"),
+		[],
+	);
 
-  useEffect(() => {
-    const handleThemeChange = () => {
-      if (theme.system) {
-        if (systemTheme.matches) {
-          document.documentElement.classList.remove("light");
-          document.documentElement.style.setProperty(
-            "--dark-hue",
-            theme.hueValue.toString()
-          );
-          setTheme({ ...theme, theme: "dark" });
-        } else {
-          document.documentElement.classList.add("light");
-          document.documentElement.style.setProperty(
-            "--light-hue",
-            theme.hueValue.toString()
-          );
-          setTheme({ ...theme, theme: "light" });
-        }
-      } else {
-        if (theme.theme === "dark") {
-          document.documentElement.classList.remove("light");
-          document.documentElement.style.setProperty(
-            "--dark-hue",
-            theme.hueValue.toString()
-          );
-        } else if (theme.theme === "light") {
-          document.documentElement.classList.add("light");
-          document.documentElement.style.setProperty(
-            "--light-hue",
-            theme.hueValue.toString()
-          );
-        }
-      }
-    };
+	useEffect(() => {
+		const handleThemeChange = () => {
+			if (theme.system) {
+				if (systemTheme.matches) {
+					document.documentElement.classList.remove("light");
+					document.documentElement.style.setProperty(
+						"--dark-hue",
+						theme.hueValue.toString(),
+					);
+					// setTheme({ ...theme, theme: "dark" });
+				} else {
+					document.documentElement.classList.add("light");
+					document.documentElement.style.setProperty(
+						"--light-hue",
+						theme.hueValue.toString(),
+					);
+					// setTheme({ ...theme, theme: "light" });
+				}
+			} else {
+				if (theme.theme === "dark") {
+					document.documentElement.classList.remove("light");
+					document.documentElement.style.setProperty(
+						"--dark-hue",
+						theme.hueValue.toString(),
+					);
+				} else if (theme.theme === "light") {
+					document.documentElement.classList.add("light");
+					document.documentElement.style.setProperty(
+						"--light-hue",
+						theme.hueValue.toString(),
+					);
+				}
+			}
+		};
 
-    handleThemeChange();
+		handleThemeChange();
 
-    systemTheme.addEventListener("change", handleThemeChange);
+		systemTheme.addEventListener("change", handleThemeChange);
 
-    return () => {
-      systemTheme.removeEventListener("change", handleThemeChange);
-    };
-  }, [systemTheme]);
+		return () => {
+			systemTheme.removeEventListener("change", handleThemeChange);
+		};
+	}, [systemTheme, theme]);
 }

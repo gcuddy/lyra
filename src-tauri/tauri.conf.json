@@ -80,8 +80,7 @@
         "decorations": true,
         "hiddenTitle": true,
         "title": "rTunes",
-        "titleBarStyle": "Overlay",
-        "transparent": true
+        "titleBarStyle": "Overlay"
       }
     ]
   }
