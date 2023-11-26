@@ -11,7 +11,7 @@ import type { AppProps } from "next/app";
 import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Store } from "tauri-plugin-store-api";
 const SourceList = dynamic(() => import("@/components/source-list"), {
 	ssr: false,
@@ -20,55 +20,39 @@ const SourceList = dynamic(() => import("@/components/source-list"), {
 const inter = Inter({ subsets: ["latin"] });
 export default function App({ Component, pageProps }: AppProps) {
 	// could maybe move this logic into library component
-	const [appWindow, setAppWindow] = useState<WebviewWindow>();
-	const [isAppWindowSetup, setIsAppWindowSetup] = useState<boolean>(false);
 	const [mainScrollRef, setMainScrollRef] = useMainScrollRef();
 
-	const [directoryListener, setDirectoryListener] =
-		useState<Promise<() => void>>();
 	const [, setDirectoryPath] = useDirectoryPath();
 
-	async function setupAppWindow() {
-		if (typeof window === "undefined") return;
-		const appWindow = (await import("@tauri-apps/api/window")).appWindow;
-		setAppWindow(appWindow);
-	}
-
-	async function getInitialDirectoryPath() {
-		const store = new Store(".settings.json");
-		const directoryPath = await store.get<string>("directory");
-		if (directoryPath && typeof directoryPath === "string") {
-			setDirectoryPath(directoryPath);
-		}
-	}
-
-	async function getAndSetDirectory() {
-		console.log("getting directory");
-		const selected = await open({
-			directory: true,
-		});
-		if (selected && typeof selected === "string") setDirectoryPath(selected);
-		await store.set("directory", selected);
-		await store.save();
-	}
-
-	const store = new Store(".settings.json");
+	const store = useMemo(() => new Store(".settings.json"), []);
 
 	useEffect(() => {
-		if (isAppWindowSetup) return;
-		setupAppWindow();
-		setIsAppWindowSetup(true);
+		async function getInitialDirectoryPath() {
+			const store = new Store(".settings.json");
+			const directoryPath = await store.get<string>("directory");
+			if (directoryPath && typeof directoryPath === "string") {
+				setDirectoryPath(directoryPath);
+			}
+		}
 		getInitialDirectoryPath();
-	}, [isAppWindowSetup]);
+	}, [setDirectoryPath]);
 
 	const router = useRouter();
 
 	useEffect(() => {
+		async function getAndSetDirectory() {
+			const selected = await open({
+				directory: true,
+			});
+			if (selected && typeof selected === "string") setDirectoryPath(selected);
+			await store.set("directory", selected);
+			await store.save();
+		}
 		const unlistener = listen("openDirectory", getAndSetDirectory);
 		return () => {
 			unlistener.then((unlisten) => unlisten());
 		};
-	}, []);
+	}, [setDirectoryPath, store]);
 
 	useEffect(() => {
 		const unlistener = listen("preferences", () => {

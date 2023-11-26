@@ -39,11 +39,13 @@ export interface SelectProps<TValue extends string = string>
 	disabled?: boolean;
 }
 
-export const Select = forwardRef(
-	<TValue extends string = string>(
-		props: PropsWithChildren<SelectProps<TValue>>,
-		ref: React.ForwardedRef<HTMLDivElement>,
-	) => (
+export const Select = forwardRef(function Select<
+	TValue extends string = string,
+>(
+	props: PropsWithChildren<SelectProps<TValue>>,
+	ref: React.ForwardedRef<HTMLDivElement>,
+) {
+	return (
 		<div ref={ref}>
 			<RS.Root
 				defaultValue={props.value}
@@ -70,8 +72,8 @@ export const Select = forwardRef(
 				</RS.Portal>
 			</RS.Root>
 		</div>
-	),
-) as <TValue extends string = string>(
+	);
+}) as <TValue extends string = string>(
 	props: PropsWithChildren<SelectProps<TValue>> & {
 		ref?: React.ForwardedRef<HTMLDivElement>;
 	},

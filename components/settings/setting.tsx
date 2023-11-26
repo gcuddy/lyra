@@ -11,7 +11,7 @@ interface Props {
 	toolTipLabel?: string | boolean;
 }
 
-export default ({ mini, ...props }: PropsWithChildren<Props>) => {
+export default function Setting({ mini, ...props }: PropsWithChildren<Props>) {
 	if (typeof props.description === "string")
 		props.description = (
 			<p className="mb-2 text-sm text-gray-400">{props.description}</p>
