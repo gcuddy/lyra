@@ -236,13 +236,6 @@ async fn read_music_file(path: &str) -> Option<Song> {
         },
         duration_ms: Some(tagged_file.properties().duration().as_millis() as f64),
         path: path.to_string(),
-        // picture: (match cover {
-        //     Some(cover) => Some(Picture {
-        //         mime_type: cover.mime_type().to_string(),
-        //         data: cover.data().to_vec(),
-        //     }),
-        //     None => None,
-        // }),
         genre: tag.genre().and_then(|s| Some(s.to_string())),
         year: tag.year().map(|f| f as i32),
         track_number: tag.track().map(|f| f as u16),
@@ -252,19 +245,10 @@ async fn read_music_file(path: &str) -> Option<Song> {
         file_size: Some(21231_u64),
         audio_bitrate: tagged_file.properties().audio_bitrate(),
         overall_bitrate: tagged_file.properties().overall_bitrate(),
-        // title: title.unwrap_or_default().to_string(),
-        // artist: artist.unwrap_or_default().to_string(),
-        // album_artist,
-        // album_title,
-        // album_art: None,
-        // // album_art,
-        // path: path.to_string(),
-        // year: year.unwrap(),
     };
 
     println!("song: {:?}", song);
 
-    // event.window().emit("fileProcessed", song).unwrap();
 
     return Some(song);
 }
@@ -328,10 +312,6 @@ fn get_album_cover(path: &str) -> Option<Picture> {
 }
 // TODO: should we play audio files thru rust?
 
-// A function that sends a message from Rust to JavaScript via a Tauri Event
-fn rs2js<R: tauri::Runtime>(message: String, manager: &impl Manager<R>) {
-    manager.emit_all("rs2js", message).unwrap();
-}
 
 #[tauri::command]
 async fn toggle_inspector_text(window: tauri::Window, show: bool) {

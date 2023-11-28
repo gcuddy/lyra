@@ -8,7 +8,6 @@ import {
 	MusicNoteSimple,
 	VinylRecord,
 } from "@phosphor-icons/react";
-
 import { type FileEntry, readDir } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { produce } from "immer";
@@ -58,7 +57,6 @@ export const BOTTOM_BAR_HEIGHT = 32;
 export default function Library({ path, scrollElement }: LibraryProps) {
 	console.log("rendering library", path);
 	// read directory
-	const [isParsing, setIsParsing] = useState(false);
 	const [musicFiles, setMusicFiles] = useState<string[]>([]);
 	const library = useAtomValue(filteredLibraryAtom);
 	const setLibrary = useSetAtom(libraryAtom);
@@ -110,48 +108,49 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 		return filename.match(/\.(mp3|ogg|aac|flac|wav|m4a)$/) !== null;
 	}
 
-	function parseMusicFiles(dir: FileEntry[], acc: string[] = []) {
-		for (let i = 0; i < dir.length; ++i) {
-			const file = dir[i];
-			if (file.children) {
-				parseMusicFiles(file.children, acc);
-			} else if (
-				file.name?.startsWith(".") === false &&
-				isAudioFile(file.name)
-			) {
-				acc.push(file.path);
-			}
-		}
-		return acc;
-	}
-
-	console.log({ library });
-
-	async function fn_parse(paths: string[]) {
-		if (isParsing) return;
-		console.time("read_music_files");
-		setIsParsing(true);
-		console.log("files", paths.length);
-		const metadata = await invoke<RawSong[]>("process_music_files", {
-			paths,
-		});
-		console.log({ metadata });
-		if (metadata?.length) {
-			console.log("got metadata length");
-			setLibrary(metadata);
-		}
-		console.log("done");
-		console.timeEnd("read_music_files");
-		setIsParsing(false);
-	}
+	// const query = useQuery({
+	// 	queryKey: ["library"],
+	// 	queryFn: async () =>
+	// 		invoke<RawSong[]>("process_music_files", {
+	// 			paths: musicFiles,
+	// 		}),
+	// });
 
 	useEffect(() => {
+		async function fn_parse(paths: string[]) {
+			console.time("read_music_files");
+			console.log("files", paths.length);
+			const metadata = await invoke<RawSong[]>("process_music_files", {
+				paths,
+			});
+			console.log({ metadata });
+			if (metadata?.length) {
+				console.log("got metadata length");
+				setLibrary(metadata);
+			}
+			console.log("done");
+			console.timeEnd("read_music_files");
+		}
 		fn_parse(musicFiles);
-	}, [musicFiles]);
+	}, [musicFiles, setLibrary]);
 
 	// this is an unpleasant pattern i should review
 	useEffect(() => {
 		console.log("reading directory", path);
+		function parseMusicFiles(dir: FileEntry[], acc: string[] = []) {
+			for (let i = 0; i < dir.length; ++i) {
+				const file = dir[i];
+				if (file.children) {
+					parseMusicFiles(file.children, acc);
+				} else if (
+					file.name?.startsWith(".") === false &&
+					isAudioFile(file.name)
+				) {
+					acc.push(file.path);
+				}
+			}
+			return acc;
+		}
 		async function readDirectory() {
 			const dir = await readDir(path, {
 				recursive: true,
@@ -390,46 +389,58 @@ function Inspector({
 					)}
 				</div>
 				<div className="border border-app-line shadow-app-shade/10 bg-app-box rounded-lg py-0.5 pointer-events-auto flex select-text flex-col overflow-hidden ">
-					<MetaContainer>
-						<MetaData
-							label="Artist"
-							icon={MicrophoneStage}
-							value={selectedSong?.artist}
-						/>
-						<MetaData
-							label="Title"
-							icon={MusicNoteSimple}
-							value={selectedSong?.title}
-						/>
-						<MetaData
-							label="Album"
-							icon={VinylRecord}
-							value={selectedSong?.album_title}
-						/>
-						<MetaData label="Genre" icon={Guitar} value={selectedSong?.genre} />
-					</MetaContainer>
-					<MetaContainer>
-						<MetaData label="Year" value={selectedSong?.year} />
-						<MetaData
-							label="Disc"
-							value={`${selectedSong?.disc_number} of ${selectedSong?.disc_total}`}
-						/>
-						<MetaData
-							label="Track"
-							value={`${selectedSong?.track_number} of ${selectedSong?.track_total}`}
-						/>
-					</MetaContainer>
-					<MetaContainer>
-						<MetaTitle>Properties</MetaTitle>
-						<MetaData
-							label="Duration"
-							value={format(selectedSong?.duration_ms ?? 0, "mm:ss")}
-						/>
-						<MetaData
-							label="Bitrate"
-							value={`${selectedSong?.audio_bitrate} kbps`}
-						/>
-					</MetaContainer>
+					{!selectedSong ? (
+						<div className="flex h-[240px] items-center justify-center text-sm text-ink-dul">
+							No selection
+						</div>
+					) : (
+						<>
+							<MetaContainer>
+								<MetaData
+									label="Artist"
+									icon={MicrophoneStage}
+									value={selectedSong?.artist}
+								/>
+								<MetaData
+									label="Title"
+									icon={MusicNoteSimple}
+									value={selectedSong?.title}
+								/>
+								<MetaData
+									label="Album"
+									icon={VinylRecord}
+									value={selectedSong?.album_title}
+								/>
+								<MetaData
+									label="Genre"
+									icon={Guitar}
+									value={selectedSong?.genre}
+								/>
+							</MetaContainer>
+							<MetaContainer>
+								<MetaData label="Year" value={selectedSong?.year} />
+								<MetaData
+									label="Disc"
+									value={`${selectedSong?.disc_number} of ${selectedSong?.disc_total}`}
+								/>
+								<MetaData
+									label="Track"
+									value={`${selectedSong?.track_number} of ${selectedSong?.track_total}`}
+								/>
+							</MetaContainer>
+							<MetaContainer>
+								<MetaTitle>Properties</MetaTitle>
+								<MetaData
+									label="Duration"
+									value={format(selectedSong?.duration_ms ?? 0, "mm:ss")}
+								/>
+								<MetaData
+									label="Bitrate"
+									value={`${selectedSong?.audio_bitrate} kbps`}
+								/>
+							</MetaContainer>
+						</>
+					)}
 				</div>
 			</div>
 		</BasicSticky>
@@ -468,7 +479,7 @@ function BottomBar() {
 	const leftSidebarWidth = useAtomValue(leftSidebarWidthAtom);
 	const [isInspectorOpen, setIsInspectorOpen] = useAtom(isInspectorOpenAtom);
 
-    // bizarre to handle this logic here, but whatever
+	// bizarre to handle this logic here, but whatever
 
 	useEffect(() => {
 		invoke("toggle_inspector_text", {
