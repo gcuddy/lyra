@@ -10,12 +10,24 @@ import { queueAtom } from "./queue";
 export const libraryAtom = atom<RawSong[]>([]);
 const searchAtom = atom<string>("");
 export const selectedSongAtom = atom<RawSong | null>(null);
-const _loadedSongAtom = atom<RawSong | null>(null);
+export const _loadedSongAtom = atom<RawSong | null>(null);
 const loadedSongAtom = atom(null, (get, set, song: RawSong | null) => {
-  get(logSongHistoryEffect);
-  set(_loadedSongAtom, song);
+	get(logSongHistoryEffect);
+	set(_loadedSongAtom, song);
 });
 const playingAtom = atom(false);
+
+
+export const isPlayingAtom = atom((get) => {
+	const playing = get(playingAtom);
+	return playing;
+	// const song = get(_loadedSongAtom);
+	// return playing && song;
+});
+
+export const setPlaying = atom(null, (get, set, value: boolean) => {
+	set(playingAtom, value);
+});
 
 export const setLoadedSongAndUpdateQueue = atom(
 	null,
@@ -52,25 +64,27 @@ export const setLoadedSongAndUpdateQueue = atom(
 export const songHistoryAtom = atom<RawSong[]>([]);
 
 const logSongHistoryEffect = atomEffect((get, set) => {
-  const song = get(_loadedSongAtom);
-  if (!song) return;
-  set(songHistoryAtom, (history) => [...history, song]);
+	const song = get(_loadedSongAtom);
+	if (!song) return;
+	set(songHistoryAtom, (history) => [...history, song]);
 });
 
 export const playNextFromQueue = atom(null, (get, set) => {
-  const queue = get(queueAtom);
-  const nextSong = queue.shift();
-  if (!nextSong) return;
-  set(queueAtom, queue);
-  set(loadedSongAtom, nextSong);
+	console.log("playNextFromQueue");
+	const queue = get(queueAtom);
+	console.log({ queue });
+	const nextSong = queue.shift();
+	if (!nextSong) return;
+	set(queueAtom, queue);
+	set(loadedSongAtom, nextSong);
 });
 
 export function useLibrary() {
-  return [...useAtom(libraryAtom)] as const;
+	return [...useAtom(libraryAtom)] as const;
 }
 
 export function useSearch() {
-  return useAtom(searchAtom);
+	return useAtom(searchAtom);
 }
 
 // export type Sort = {
@@ -118,41 +132,41 @@ export function useSearch() {
 // }
 
 export const filteredLibraryAtom = atom((get) => {
-  const library = get(libraryAtom);
-  const search = get(searchAtom);
-  if (search === "") return library;
-  const filtered = library.filter((song) =>
-    `${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
-  return filtered;
+	const library = get(libraryAtom);
+	const search = get(searchAtom);
+	if (search === "") return library;
+	const filtered = library.filter((song) =>
+		`${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
+			.toLowerCase()
+			.includes(search.toLowerCase()),
+	);
+	return filtered;
 });
 
 export const libraryCountAtom = atom((get) => {
-  const library = get(libraryAtom);
-  return library.length;
+	const library = get(libraryAtom);
+	return library.length;
 });
 
 export const filteredLibraryCountAtom = atom((get) => {
-  const library = get(filteredLibraryAtom);
-  return library.length;
+	const library = get(filteredLibraryAtom);
+	return library.length;
 });
 
 export function useFilteredLibrary() {
-  return [...useAtom(filteredLibraryAtom)] as const;
+	return [...useAtom(filteredLibraryAtom)] as const;
 }
 
 export function useSelectedSong() {
-  return [...useAtom(selectedSongAtom)] as const;
+	return [...useAtom(selectedSongAtom)] as const;
 }
 
 export function useLoadedSong() {
-  return [...useAtom(_loadedSongAtom)] as const;
+	return [...useAtom(_loadedSongAtom)] as const;
 }
 
 export function usePlaying() {
-  return [...useAtom(playingAtom)] as const;
+	return [...useAtom(playingAtom)] as const;
 }
 
 // export function useFilteredLibrary() {
@@ -160,57 +174,57 @@ export function usePlaying() {
 // }
 
 const loadedSongAlbumArt = atom(async (get) => {
-  const song = get(_loadedSongAtom);
-  if (!song) return;
-  const cover = await invoke<Picture>("get_album_cover", {
-    path: song.path,
-  });
-  console.log({ cover });
-  return cover;
+	const song = get(_loadedSongAtom);
+	if (!song) return;
+	const cover = await invoke<Picture>("get_album_cover", {
+		path: song.path,
+	});
+	console.log({ cover });
+	return cover;
 });
 
 const selectedSongAlbumArt = atom(async (get) => {
-  const song = get(selectedSongAtom);
-  if (!song) return;
-  const cover = await invoke<Picture>("get_album_cover", {
-    path: song.path,
-  });
-  console.log({ cover });
-  return cover;
+	const song = get(selectedSongAtom);
+	if (!song) return;
+	const cover = await invoke<Picture>("get_album_cover", {
+		path: song.path,
+	});
+	console.log({ cover });
+	return cover;
 });
 const loadableSelectedSong = loadable(selectedSongAlbumArt);
 const loadableLoadedSong = loadable(loadedSongAlbumArt);
 
 export function useSelectedSongAlbumArt() {
-  return [...useAtom(loadableSelectedSong)] as const;
+	return [...useAtom(loadableSelectedSong)] as const;
 }
 
 const selectedImageDataUrl = atom(async (get) => {
-  const song = await get(selectedSongAlbumArt);
-  if (!song) return;
-  const uint8Array = new Uint8Array(song.data);
-  const blob = new Blob([uint8Array]);
-  const dataURL = URL.createObjectURL(blob);
-  return dataURL;
+	const song = await get(selectedSongAlbumArt);
+	if (!song) return;
+	const uint8Array = new Uint8Array(song.data);
+	const blob = new Blob([uint8Array]);
+	const dataURL = URL.createObjectURL(blob);
+	return dataURL;
 });
 
 const loadedImageDataUrl = atom(async (get) => {
-  const song = await get(loadedSongAlbumArt);
-  if (!song) return;
-  const uint8Array = new Uint8Array(song.data);
-  const blob = new Blob([uint8Array]);
-  const dataURL = URL.createObjectURL(blob);
-  return dataURL;
+	const song = await get(loadedSongAlbumArt);
+	if (!song) return;
+	const uint8Array = new Uint8Array(song.data);
+	const blob = new Blob([uint8Array]);
+	const dataURL = URL.createObjectURL(blob);
+	return dataURL;
 });
 
 export const loadableLoadedImageDataUrl = loadable(loadedImageDataUrl);
 
 export function useLoadedImageDataUrl() {
-  return [...useAtom(loadableLoadedImageDataUrl)] as const;
+	return [...useAtom(loadableLoadedImageDataUrl)] as const;
 }
 
 const loadableSelectedImageDataUrl = loadable(selectedImageDataUrl);
 
 export function useSelectedImageDataUrl() {
-  return [...useAtom(loadableSelectedImageDataUrl)] as const;
+	return [...useAtom(loadableSelectedImageDataUrl)] as const;
 }

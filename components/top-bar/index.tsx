@@ -1,5 +1,6 @@
 import {
 	playNextFromQueue,
+	setLoadedSongAndUpdateQueue,
 	songHistoryAtom,
 	useLoadedImageDataUrl,
 	useLoadedSong,
@@ -93,16 +94,12 @@ export default function TopBar() {
 		const audio = new Audio();
 		audioRef.current = audio;
 
-		audio.addEventListener("ended", playNext);
-		// TODO: raf for timeupdate
-
 		return () => {
-			audio.removeEventListener("ended", playNext);
+			// audio.removeEventListener("ended", playNext);
 		};
-	}, [playNext]);
+	}, []);
 
-
-    // another solution would be to extract the logic into another function so we don't re-run this effect when loadedSong changes
+	// another solution would be to extract the logic into another function so we don't re-run this effect when loadedSong changes
 	useEffect(() => {
 		const unlisten = listen("play", () => {
 			if (loadedSong) {
@@ -306,22 +303,38 @@ function TimeDisplay({
 	const [time, setTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [showTimeRemaining, setShowTimeRemaining] = useState(false);
+	const [, playNext] = useAtom(playNextFromQueue);
+
+	const [isGettingNextSong, setIsGettingNextSong] = useState(false);
+
+	function setNextSong() {
+		if (isGettingNextSong) return;
+		setIsGettingNextSong(true);
+
+		playNext();
+
+		setIsGettingNextSong(false);
+	}
 
 	useEffect(() => {
 		if (!audioRef.current) return;
 		const audio = audioRef.current;
 		console.log({ audio });
-		audio.addEventListener("timeupdate", (e) => {
+		function timeupdate() {
 			setTime(audio.currentTime);
-		});
+			if (audio.ended) {
+				// play next song
+				console.log("ended");
+				setNextSong();
+			}
+		}
+		audio.addEventListener("timeupdate", timeupdate);
 		audio.addEventListener("loadedmetadata", (e) => {
 			setDuration(audio.duration);
 		});
 
 		return () => {
-			audio.removeEventListener("timeupdate", (e) => {
-				setTime(audio.currentTime);
-			});
+			audio.removeEventListener("timeupdate", timeupdate);
 			audio.removeEventListener("loadedmetadata", (e) => {
 				setDuration(audio.duration);
 			});

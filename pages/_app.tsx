@@ -78,11 +78,6 @@ export default function App({ Component, pageProps }: AppProps) {
 						<SourceList />
 					</div>
 					<Component {...pageProps} />
-					{/* <div
-          ref={setMainScrollRef}
-          className="flex col-span-3 lg:col-span-4 flex-col pointer-events-auto"
-        >
-        </div> */}
 				</div>
 			</main>
 		</TooltipProvider>
