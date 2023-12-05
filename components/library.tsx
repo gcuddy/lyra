@@ -65,6 +65,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 	const [listOffset, setListOffset] = useState(0);
 	const [selectedSong, setSelectedSong] = useAtom(selectedSongAtom);
 	const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
+	const [, setLoadedSong] = useAtom(setLoadedSongAndUpdateQueue);
+
 	console.log({ parentRef });
 
 	useEffect(() => {
@@ -335,6 +337,7 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 								if (!row) return <></>;
 
 								return (
+									// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 									<div
 										key={row.id}
 										className="absolute left-0 top-0 min-w-full"
@@ -343,6 +346,12 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 											transform: `translateY(${
 												virtualItem.start - rowVirtualizer.options.scrollMargin
 											}px)`,
+										}}
+										onClick={() => {
+											setSelectedSong(row.original);
+										}}
+										onDoubleClick={() => {
+											setLoadedSong(row.original);
 										}}
 									>
 										<div
@@ -551,28 +560,30 @@ function BottomBar() {
 	);
 }
 
-const LibraryItem = function LibraryItem({
+const LibraryItem = memo(function LibraryItem({
 	row,
 	paddingLeft = 0,
 	paddingRight = 0,
+	isSelected,
 }: {
 	row: Row<RawSong>;
+	isSelected: boolean;
 	paddingLeft: number;
 	paddingRight: number;
 }) {
 	console.log("rendering library item", row.original.id);
-	const setSelectedSong = useSetAtom(selectedSongAtom);
-	const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
+	// const setSelectedSong = useSetAtom(selectedSongAtom);
+	// const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
 	return (
 		<>
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 			<div
-				onClick={() => {
-					setSelectedSong(row.original);
-				}}
-				onDoubleClick={() => {
-					setLoadedSong(row.original);
-				}}
+				// onClick={() => {
+				// 	setSelectedSong(row.original);
+				// }}
+				// onDoubleClick={() => {
+				// 	setLoadedSong(row.original);
+				// }}
 				// h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
 				className={"relative flex h-full items-center"}
 			>
@@ -591,4 +602,4 @@ const LibraryItem = function LibraryItem({
 			</div>
 		</>
 	);
-}
+});
