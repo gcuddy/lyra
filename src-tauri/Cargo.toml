@@ -25,8 +25,6 @@ tauri = { version = "1.5.2", features = [ "macos-private-api", "protocol-all",
 ] }
 tauri-plugin-persisted-scope = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-symphonia = { version = "0.5.3", features = ["mp3"] }
-symphonia-metadata = "0.5.3"
 audiotags = "0.4.1"
 bson = "2.7.0"
 logging_timer = "1.1.0"
