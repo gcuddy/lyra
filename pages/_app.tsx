@@ -6,12 +6,11 @@ import "@/styles/globals.css";
 // import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
-import type { WebviewWindow } from "@tauri-apps/api/window";
 import type { AppProps } from "next/app";
 import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Store } from "tauri-plugin-store-api";
 const SourceList = dynamic(() => import("@/components/source-list"), {
 	ssr: false,

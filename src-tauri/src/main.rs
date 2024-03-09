@@ -182,29 +182,7 @@ async fn read_music_file(path: &str) -> Option<Song> {
         None => tagged_file.first_tag()?,
     };
 
-    // credit some of this https://github.dev/KRTirtho/metadata_god/tree/main/packages/metadata_god
-
-    // let cover = tag
-    //     .get_picture_type(lofty::PictureType::CoverFront)
-    //     .or(tag.pictures().first());
-
-    // let title = tag.title().to_owned().unwrap();
-
-    // let tag = Tag::new().read_from_path(path).unwrap();
-
-    // let album = tag.album().unwrap();
-    // let artist = tag.artist();
-    // let title = tag.title();
-    // let year = tag.year();
-
-    // let album_artist = album.artist.unwrap_or_default().to_string();
-    // let album_title = album.title.to_string();
     let id = nanoid!();
-    // let album_art = match album.cover {
-    //     Some(cover) => Some(cover.data.to_vec()),
-    //     None => None,
-    // };
-    // album.as_ref()
     let rating = match tag.get(&ItemKey::Popularimeter) {
         Some(s) => match s.value() {
             ItemValue::Text(t) => t.parse::<u8>().ok(),
