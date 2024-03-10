@@ -24,7 +24,7 @@ import { format } from "date-fns";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { SearchIcon, Volume1, Volume2 } from "lucide-react";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Seeker } from "../ui/seeker";
@@ -118,7 +118,7 @@ export default function TopBar() {
 		}
 	}, [volume]);
 
-	if (!audioRef.current) return <div />;
+	// if (!audioRef.current) return <div />;
 
 	return (
 		<div
@@ -221,7 +221,7 @@ function CovertArt() {
 	return (
 		<div className="flex h-14 rounded-[inherit] aspect-square object-cover flex-col items-center justify-center">
 			{loadedImageDataUrlState.state === "hasData" &&
-			loadedImageDataUrlState.data ? (
+				loadedImageDataUrlState.data ? (
 				<img
 					alt=""
 					className="h-full w-full object-cover object-center"
@@ -235,10 +235,10 @@ function CovertArt() {
 }
 
 function SearchBar() {
-	const os = useOperatingSystem();
-	const keybind = keybindForOs(os);
+	// TODO: this isn't working because of ssr bs
+	// const os = useOperatingSystem();
+	const keybind = keybindForOs("macOS");
 	const [search, setSearch] = useSearch();
-
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -307,14 +307,14 @@ function TimeDisplay({
 
 	const [isGettingNextSong, setIsGettingNextSong] = useState(false);
 
-	function setNextSong() {
+	const setNextSong = useCallback(() => {
 		if (isGettingNextSong) return;
 		setIsGettingNextSong(true);
 
 		playNext();
 
 		setIsGettingNextSong(false);
-	}
+	}, [isGettingNextSong, playNext]);
 
 	useEffect(() => {
 		if (!audioRef.current) return;
@@ -339,7 +339,7 @@ function TimeDisplay({
 				setDuration(audio.duration);
 			});
 		};
-	}, [audioRef]);
+	}, [audioRef, setNextSong]);
 
 	return (
 		<div className="flex grow w-full items-center gap-2 px-4">

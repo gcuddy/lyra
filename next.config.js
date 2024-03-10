@@ -6,6 +6,9 @@ const nextConfig = {
   experimental: {
     swcPlugins: [["@swc-jotai/react-refresh", {}]],
   },
+  images: {
+    unoptimized: true,
+  }
 };
 
 module.exports = million.next(nextConfig, { auto: true });

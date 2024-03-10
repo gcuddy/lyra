@@ -8,28 +8,20 @@ import {
 	MusicNoteSimple,
 	VinylRecord,
 } from "@phosphor-icons/react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { type FileEntry, readDir } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { produce } from "immer";
 import {
 	ReactNode,
 	RefObject,
 	memo,
-	useCallback,
 	useEffect,
-	useLayoutEffect,
 	useRef,
-	useState,
 } from "react";
 import BasicSticky from "react-sticky-el";
 
 import { isInspectorOpenAtom } from "@/atoms/inspector";
 import {
-	filteredLibraryAtom,
 	filteredLibraryCountAtom,
-	libraryAtom,
-	searchAtom,
 	selectedSongAtom,
 	setLoadedSongAndUpdateQueue,
 	useSelectedImageDataUrl,
@@ -37,14 +29,11 @@ import {
 import { leftSidebarWidthAtom } from "@/atoms/sizes";
 import { tw } from "@/lib/tailwind";
 import { cn } from "@/lib/utils";
-import { useTable } from "@/view/table";
 import { Row, flexRender } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { emit, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { format } from "date-fns";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { atomWithQuery } from 'jotai-tanstack-query'
+import { useAtom, useAtomValue } from "jotai";
 import { For } from "million/react";
 import { useOutsideClick } from "rooks";
 import { Button } from "./ui/button";
@@ -163,200 +152,12 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 				<List
 					path={path}
 					songs={library}
-					scrollElement={sRef}
 				/>
 			</div>
 		</div>
 	)
 
 
-	return (
-		<div className="flex flex-1 w-full overflow-hidden">
-			<div
-				ref={parentRef}
-				onKeyDown={(e) => {
-					console.log({ e });
-				}}
-				className=" bg-app relative overscroll-none"
-				style={{
-					height: "100%",
-					width: "100%",
-					overflow: "auto",
-					pointerEvents: "auto",
-					paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
-				}}
-			>
-				{/* <button
-          onClick={() => {
-            console.time("read_music_files");
-            invoke<RawSong[]>("process_music_files", {
-              paths: musicFiles,
-            }).then((metadata) => {
-              console.log({ metadata });
-              console.timeEnd("read_music_files");
-              //   if (metadata?.length) {
-              //     console.log("got metadata length");
-              //     setLibrary(metadata);
-              //   }
-            });
-          }}
-        >
-          parse
-        </button>
-        <div>{library.length} songs</div> */}
-				<BasicSticky
-					scrollElement={parentRef.current ?? undefined}
-					stickyStyle={{ zIndex: 10 }}
-					//   stickyStyle={{ top, zIndex: 10 }}
-					//   topOffset={-top}
-					// Without this the width of the element doesn't get updated
-					// when the inspector is toggled
-					positionRecheckInterval={100}
-				>
-					<ContextMenu.Root
-						trigger={
-							<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
-								{table.getHeaderGroups().map((headerGroup) => (
-									<div
-										key={headerGroup.id}
-										className="flex w-fit divide-x divide-app-line"
-									>
-										{headerGroup.headers.map((header, i) => {
-											const size = header.column.getSize();
-
-											// const orderKey
-											const cellContent = flexRender(
-												header.column.columnDef.header,
-												header.getContext(),
-											);
-
-											const firstSort = table.getState().sorting[0];
-
-											const isActive = header.id === firstSort?.id;
-
-											return (
-												<div key={header.id}>
-													{header.isPlaceholder ? null : (
-														<button
-															type="button"
-															style={{
-																width: size,
-															}}
-															className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
-															onClick={() => {
-																// see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
-																table.setSorting(
-																	produce((draft) => {
-																		if (draft[0].id === header.id) {
-																			draft[0].desc = !draft[0].desc;
-																		}
-																		draft[0].id = header.id;
-																	}),
-																);
-															}}
-														>
-															<div className="truncate">
-																<span
-																	className={clsx(isActive && "font-medium")}
-																>
-																	{cellContent}
-																</span>
-															</div>
-															{isActive ? (
-																firstSort?.desc ? (
-																	<CaretDown className="shrink-0 text-ink-faint" />
-																) : (
-																	<CaretUp className="shrink-0 text-ink-faint" />
-																)
-															) : null}
-														</button>
-													)}
-												</div>
-											);
-										})}
-									</div>
-								))}
-							</div>
-						}
-					>
-						{table.getAllLeafColumns().map((column) => {
-							if (column.id === "name") return null;
-							return (
-								<ContextMenu.CheckboxItem
-									key={column.id}
-									checked={column.getIsVisible()}
-									onSelect={column.getToggleVisibilityHandler()}
-									label={
-										typeof column.columnDef.header === "string"
-											? column.columnDef.header
-											: column.id
-									}
-								/>
-							);
-						})}
-					</ContextMenu.Root>
-				</BasicSticky>
-				{/* table body ref */}
-				<div className="overflow-x-auto overscroll-x-none">
-					<div
-						className="relative"
-						style={{
-							height: `${rowVirtualizer.getTotalSize()}px`,
-						}}
-					>
-						<For each={rowVirtualizer.getVirtualItems()} as="div">
-							{(virtualItem) => {
-								// we don't have to use normal td's here because it's a desktop app
-
-								const row = rows[virtualItem.index];
-
-								const selected = selectedSong?.id === row?.id;
-
-								if (!row) return <></>;
-
-								return (
-									// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-									<div
-										key={row.id}
-										className="absolute left-0 top-0 min-w-full"
-										style={{
-											height: `${virtualItem.size}px`,
-											transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin
-												}px)`,
-										}}
-										onClick={() => {
-											setSelectedSong(row.original);
-										}}
-										onDoubleClick={() => {
-											setLoadedSong(row.original);
-										}}
-									>
-										<div
-											className={cn(
-												"absolute inset-0 rounded-md border",
-												virtualItem.index % 2 === 0 && "bg-app-darkBox",
-												selected
-													? "border-accent !bg-accent/10"
-													: "border-transparent",
-											)}
-										>
-											<LibraryItem
-												row={row}
-												paddingLeft={padding.left}
-												paddingRight={padding.right}
-											/>
-										</div>
-									</div>
-								);
-							}}
-						</For>
-					</div>
-					<BottomBar />
-				</div>
-			</div>
-			{isInspectorOpen && <Inspector scrollElement={parentRef} />}
-		</div>
-	);
 }
 
 export const INSPECTOR_WIDTH = 260;

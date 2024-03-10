@@ -1,10 +1,12 @@
 import {
 	isPlayingAtom,
 	playNextFromQueue,
+	setPlaying,
 	songHistoryAtom,
+	useLoadedSong,
 } from "@/atoms/library";
 import { Pause, Play, SkipBack, SkipForward } from "@phosphor-icons/react";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 
@@ -22,6 +24,8 @@ export default function AudioPlayer() {
 	const [volume, setVolume] = useAtom(volumeAtom);
 	const songHistory = useAtomValue(songHistoryAtom);
 	const queue = useAtomValue(queueAtom);
+	const [loadedSong, setLoadedSong] = useLoadedSong();
+	const setPlayingState = useSetAtom(setPlaying);
 
 	useEffect(() => {
 		if (isPlaying) {
@@ -48,13 +52,13 @@ export default function AudioPlayer() {
 				<Button
 					disabled={!loadedSong}
 					onClick={() => {
-						setPlaying(!playing);
+						setPlayingState(!isPlaying);
 					}}
 					size="icon"
 					variant="subtle"
 					className="text-ink-dull h-10 w-10 flex justify-center"
 				>
-					{!playing ? (
+					{!isPlaying ? (
 						<Play className="relative h-5 w-5" />
 					) : (
 						<Pause className="relative h-5 w-5" />

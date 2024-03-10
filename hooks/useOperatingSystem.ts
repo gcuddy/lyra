@@ -1,4 +1,5 @@
 import { OperatingSystem } from "@/lib/utils";
+import { useEffect, useState } from "react";
 // import { useQuery } from "@tanstack/react-query";
 // TODO: make much more robust (see commented out stuff)
 
@@ -31,8 +32,12 @@ export function useOperatingSystem(realOs?: boolean): OperatingSystem {
   //       enabled: platform.getOs !== undefined,
   //     }
   //   );
+  const [os, setOs] = useState<OperatingSystem>("unknown");
+  useEffect(() => {
+    setOs(guessOperatingSystem());
+  }, [])
 
-  return guessOperatingSystem();
+  return os
 
   //   return platform.platform === "web" && !realOs ? "browser" : data;
 }

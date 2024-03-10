@@ -3,9 +3,7 @@ import { Heading } from "@/components/settings/heading";
 import { HuePicker } from "@/components/settings/hue-picker";
 import Setting from "@/components/settings/setting";
 import { Select, SelectOption } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { changeHueValue } from "@/hooks/useTheme";
-import { Palette } from "@phosphor-icons/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 

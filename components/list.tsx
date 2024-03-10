@@ -19,7 +19,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import BasicSticky from "react-sticky-el";
 import { useOutsideClick } from "rooks";
 import { BOTTOM_BAR_HEIGHT, INSPECTOR_WIDTH } from "./library";
 import { ContextMenu } from "./ui/context-menu";
@@ -93,65 +92,67 @@ export default function List({ path, songs, }: LibraryProps) {
 		>
 			<div
 			>
-				<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
-					{table.getHeaderGroups().map((headerGroup) => (
-						<div
-							key={headerGroup.id}
-							className="flex w-fit divide-x divide-app-line"
-						>
-							{headerGroup.headers.map((header, i) => {
-								const size = header.column.getSize();
+				<div className="sticky top-0 z-10">
+					<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
+						{table.getHeaderGroups().map((headerGroup) => (
+							<div
+								key={headerGroup.id}
+								className="flex w-fit divide-x divide-app-line"
+							>
+								{headerGroup.headers.map((header, i) => {
+									const size = header.column.getSize();
 
-								// const orderKey
-								const cellContent = flexRender(
-									header.column.columnDef.header,
-									header.getContext(),
-								);
+									// const orderKey
+									const cellContent = flexRender(
+										header.column.columnDef.header,
+										header.getContext(),
+									);
 
-								const firstSort = table.getState().sorting[0];
+									const firstSort = table.getState().sorting[0];
 
-								const isActive = header.id === firstSort?.id;
+									const isActive = header.id === firstSort?.id;
 
-								return (
-									<div key={header.id}>
-										{header.isPlaceholder ? null : (
-											<button
-												type="button"
-												style={{
-													width: size,
-												}}
-												className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
-												onClick={() => {
-													// see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
-													table.setSorting(
-														produce((draft) => {
-															if (draft[0].id === header.id) {
-																draft[0].desc = !draft[0].desc;
-															}
-															draft[0].id = header.id;
-														}),
-													);
-												}}
-											>
-												<div className="truncate">
-													<span className={clsx(isActive && "font-medium")}>
-														{cellContent}
-													</span>
-												</div>
-												{isActive ? (
-													firstSort?.desc ? (
-														<CaretDown className="shrink-0 text-ink-faint" />
-													) : (
-														<CaretUp className="shrink-0 text-ink-faint" />
-													)
-												) : null}
-											</button>
-										)}
-									</div>
-								);
-							})}
-						</div>
-					))}
+									return (
+										<div key={header.id}>
+											{header.isPlaceholder ? null : (
+												<button
+													type="button"
+													style={{
+														width: size,
+													}}
+													className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
+													onClick={() => {
+														// see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
+														table.setSorting(
+															produce((draft) => {
+																if (draft[0].id === header.id) {
+																	draft[0].desc = !draft[0].desc;
+																}
+																draft[0].id = header.id;
+															}),
+														);
+													}}
+												>
+													<div className="truncate">
+														<span className={clsx(isActive && "font-medium")}>
+															{cellContent}
+														</span>
+													</div>
+													{isActive ? (
+														firstSort?.desc ? (
+															<CaretDown className="shrink-0 text-ink-faint" />
+														) : (
+															<CaretUp className="shrink-0 text-ink-faint" />
+														)
+													) : null}
+												</button>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						))}
+					</div>
 				</div>
 			</div>
 			{/* table body ref */}
@@ -218,6 +219,7 @@ export default function List({ path, songs, }: LibraryProps) {
 	);
 }
 
+
 type LibrarySongProps = {
 	row: Row<RawSong>;
 	paddingLeft: number;
@@ -256,3 +258,5 @@ const LibrarySong = memo(({ row }: LibrarySongProps) => {
 	);
 	// return <>hello</>;
 });
+
+LibrarySong.displayName = "LibrarySong";
