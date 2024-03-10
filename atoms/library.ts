@@ -8,7 +8,7 @@ import { queueAtom } from "./queue";
 
 // const libraryAtom = atomWithStorage<RawSong[]>("library", []);
 export const libraryAtom = atom<RawSong[]>([]);
-const searchAtom = atom<string>("");
+export const searchAtom = atom<string>("");
 export const selectedSongAtom = atom<RawSong | null>(null);
 export const _loadedSongAtom = atom<RawSong | null>(null);
 const loadedSongAtom = atom(null, (get, set, song: RawSong | null) => {

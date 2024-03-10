@@ -26,11 +26,10 @@ import { ContextMenu } from "./ui/context-menu";
 
 type LibraryProps = {
 	path: string;
-	scrollElement: RefObject<HTMLElement>;
 	songs: RawSong[];
 };
 
-export default function List({ path, songs, scrollElement }: LibraryProps) {
+export default function List({ path, songs, }: LibraryProps) {
 	const tableRef = useRef<HTMLDivElement>(null);
 	const [listOffset, setListOffset] = useState(0);
 	const [selectedSong, setSelectedSong] = useAtom(selectedSongAtom);
@@ -59,8 +58,8 @@ export default function List({ path, songs, scrollElement }: LibraryProps) {
 	const rowVirtualizer = useVirtualizer({
 		count,
 		getScrollElement: useCallback(
-			() => scrollElement?.current,
-			[scrollElement],
+			() => tableRef?.current,
+			[tableRef],
 		),
 		estimateSize: useCallback(() => 35, []),
 		getItemKey: (index) => songs[index]?.id,
@@ -71,13 +70,14 @@ export default function List({ path, songs, scrollElement }: LibraryProps) {
 	});
 
 	useLayoutEffect(
-		() => setListOffset(scrollElement.current?.offsetTop ?? 0),
-		[scrollElement],
+		() => setListOffset(tableRef.current?.offsetTop ?? 0),
+		[tableRef],
 	);
 
 	useOutsideClick(tableRef, () => {
 		setSelectedSong(null);
 	});
+
 
 	return (
 		<div
@@ -91,7 +91,8 @@ export default function List({ path, songs, scrollElement }: LibraryProps) {
 				paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
 			}}
 		>
-			<div className="sticky top-0">
+			<div
+			>
 				<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
 					{table.getHeaderGroups().map((headerGroup) => (
 						<div
@@ -177,9 +178,8 @@ export default function List({ path, songs, scrollElement }: LibraryProps) {
 									className="absolute left-0 top-0 min-w-full"
 									style={{
 										height: `${virtualItem.size}px`,
-										transform: `translateY(${
-											virtualItem.start - rowVirtualizer.options.scrollMargin
-										}px)`,
+										transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin
+											}px)`,
 									}}
 								>
 									<div

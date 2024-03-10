@@ -3,6 +3,8 @@ import { useMainScrollRef } from "@/atoms/refs";
 import TopBar from "@/components/top-bar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "@/styles/globals.css";
+import { keepPreviousData } from "@tanstack/query-core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
@@ -63,22 +65,36 @@ export default function App({ Component, pageProps }: AppProps) {
 		};
 	}, [router]);
 
+	const client = new QueryClient({
+		defaultOptions: {
+			queries: {
+				staleTime: Infinity,
+				refetchOnWindowFocus: false,
+				refetchOnReconnect: false,
+				refetchOnMount: false,
+				placeholderData: keepPreviousData,
+			}
+		}
+	})
+
 	return (
-		<TooltipProvider>
-			<main
-				className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
-			>
-				<TopBar />
-				<div
-					ref={setMainScrollRef}
-					className="flex grow h-[calc(100%-80px)] w-full"
+		<QueryClientProvider client={client}>
+			<TooltipProvider>
+				<main
+					className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
 				>
-					<div style={{}} className="flex flex-col">
-						<SourceList />
+					<TopBar />
+					<div
+						ref={setMainScrollRef}
+						className="flex grow h-[calc(100%-80px)] w-full"
+					>
+						<div style={{}} className="flex flex-col">
+							<SourceList />
+						</div>
+						<Component {...pageProps} />
 					</div>
-					<Component {...pageProps} />
-				</div>
-			</main>
-		</TooltipProvider>
+				</main>
+			</TooltipProvider>
+		</QueryClientProvider>
 	);
 }

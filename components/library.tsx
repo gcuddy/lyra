@@ -8,6 +8,7 @@ import {
 	MusicNoteSimple,
 	VinylRecord,
 } from "@phosphor-icons/react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { type FileEntry, readDir } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { produce } from "immer";
@@ -28,6 +29,7 @@ import {
 	filteredLibraryAtom,
 	filteredLibraryCountAtom,
 	libraryAtom,
+	searchAtom,
 	selectedSongAtom,
 	setLoadedSongAndUpdateQueue,
 	useSelectedImageDataUrl,
@@ -42,11 +44,14 @@ import { emit, listen } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atomWithQuery } from 'jotai-tanstack-query'
 import { For } from "million/react";
 import { useOutsideClick } from "rooks";
 import { Button } from "./ui/button";
 import { ContextMenu } from "./ui/context-menu";
 import { Tooltip } from "./ui/tooltip";
+import List from "./list";
+import { libraryQueryAtom, musicFilesQueryAtom } from "@/atoms/queries";
 
 interface LibraryProps {
 	path: string;
@@ -58,139 +63,112 @@ export const BOTTOM_BAR_HEIGHT = 32;
 export default function Library({ path, scrollElement }: LibraryProps) {
 	console.log("rendering library", path);
 	// read directory
-	const [musicFiles, setMusicFiles] = useState<string[]>([]);
-	const library = useAtomValue(filteredLibraryAtom);
-	const setLibrary = useSetAtom(libraryAtom);
 	const parentRef = useRef<HTMLDivElement>(null);
-	const [listOffset, setListOffset] = useState(0);
+	// const [listOffset, setListOffset] = useState(0);
 	const [selectedSong, setSelectedSong] = useAtom(selectedSongAtom);
 	const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
 	const [, setLoadedSong] = useAtom(setLoadedSongAndUpdateQueue);
 
-	console.log({ parentRef });
+	// useEffect(() => {
+	// 	emitf:q("selectionchange", !!selectedSong);
+	// }, [selectedSong]);
+	//
 
-	useEffect(() => {
-		emit("selectionchange", !!selectedSong);
-		// if (selectedSong) {
-		// 	// emit event to update menu item
-		// } else {
-		// 	emit("noselection");
-		// }
-	}, [selectedSong]);
 
-	//   const [sort, setSort] = useSort();
-	//   console.log({ sort });
+	const { data: musicFiles } = useAtomValue(musicFilesQueryAtom);
+	//
+	// const { data: musicFiles } = useQuery({
+	// 	queryKey: ["musicFiles", path],
+	// 	queryFn: async () => {
+	// 		function parseMusicFiles(dir: FileEntry[], acc: string[] = []) {
+	// 			for (let i = 0; i < dir.length; ++i) {
+	// 				const file = dir[i];
+	// 				if (file.children) {
+	// 					parseMusicFiles(file.children, acc);
+	// 				} else if (
+	// 					file.name?.startsWith(".") === false &&
+	// 					isAudioFile(file.name)
+	// 				) {
+	// 					acc.push(file.path);
+	// 				}
+	// 			}
+	// 			return acc;
+	// 		}
+	// 		const dir = await readDir(path, {
+	// 			recursive: true,
+	// 		});
+	// 		const files = parseMusicFiles(dir);
+	// 		return files
+	// 	}
+	// })
+	console.log({ musicFiles })
 
-	const { table } = useTable({ data: library });
-
-	const { rows } = table.getRowModel();
-
-	//   or rows.length?
-	const count = library?.length || 0;
-
-	const padding = {
-		top: 12,
-		bottom: 12,
-		left: 16,
-		right: 16,
-	};
-	//   const [top, setTop] = useState(256);
-
-	const rowVirtualizer = useVirtualizer({
-		count,
-		getScrollElement: useCallback(() => parentRef.current, []),
-		estimateSize: useCallback(() => 35, []),
-		getItemKey: (index) => library[index]?.id,
-		overscan: 20,
-		paddingStart: padding.top,
-		paddingEnd: padding.bottom + BOTTOM_BAR_HEIGHT,
-		scrollMargin: listOffset,
-	});
-
-	function isAudioFile(filename: string): boolean {
-		return filename.match(/\.(mp3|ogg|aac|flac|wav|m4a)$/) !== null;
-	}
-
-	// const query = useQuery({
+	// const libraryAtom = atomWithQuery((get) => ({
 	// 	queryKey: ["library"],
 	// 	queryFn: async () =>
 	// 		invoke<RawSong[]>("process_music_files", {
 	// 			paths: musicFiles,
 	// 		}),
-	// });
+	// 	enabled: !!musicFiles?.length,
+	// 	select: (data: RawSong[]) => {
+	// 		const search = get(searchAtom);
+	// 		if (search === "") return data;
+	// 		const filtered = data.filter((song) =>
+	// 			`${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
+	// 				.toLowerCase()
+	// 				.includes(search.toLowerCase()),
+	// 		);
+	// 		return filtered;
+	// 	},
+	// }))
+	// 	placeholderData: keepPreviousData
+	//
+	const { data: library, isLoading } = useAtomValue(libraryQueryAtom);
+	console.log({ library });
 
-	useEffect(() => {
-		async function fn_parse(paths: string[]) {
-			console.time("read_music_files");
-			console.log("files", paths.length);
-			const metadata = await invoke<RawSong[]>("process_music_files", {
-				paths,
-			});
-			console.log({ metadata });
-			if (metadata?.length) {
-				console.log("got metadata length");
-				setLibrary(metadata);
-			}
-			console.log("done");
-			console.timeEnd("read_music_files");
-		}
-		fn_parse(musicFiles);
-	}, [musicFiles, setLibrary]);
 
-	// this is an unpleasant pattern i should review
-	useEffect(() => {
-		console.log("reading directory", path);
-		function parseMusicFiles(dir: FileEntry[], acc: string[] = []) {
-			for (let i = 0; i < dir.length; ++i) {
-				const file = dir[i];
-				if (file.children) {
-					parseMusicFiles(file.children, acc);
-				} else if (
-					file.name?.startsWith(".") === false &&
-					isAudioFile(file.name)
-				) {
-					acc.push(file.path);
-				}
-			}
-			return acc;
-		}
-		async function readDirectory() {
-			const dir = await readDir(path, {
-				recursive: true,
-			});
-			console.log({ dir });
-			const files = parseMusicFiles(dir);
-			console.log({ files });
-			setMusicFiles(files);
-		}
-		readDirectory();
-	}, [path]);
 
-	//   if (isParsing) {
-	//     return <div>Reading music files...</div>;
-	//   }
+	// useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
 
-	useLayoutEffect(() => setListOffset(parentRef.current?.offsetTop ?? 0), []);
+	// useEffect(() => {
+	// 	function listen(event: KeyboardEvent) {
+	// 		if (event.key === " ") {
+	// 			// look into it
+	// 			console.log({ event });
+	// 			// TODO: prevent scroll (might involve setting overflow-hidden/auto)
+	// 		}
+	// 	}
+	//
+	// 	window.addEventListener("keydown", listen);
+	// 	return () => {
+	// 		window.removeEventListener("keydown", listen);
+	// 	};
+	// }, []);
 
-	useEffect(() => {
-		function listen(event: KeyboardEvent) {
-			if (event.key === " ") {
-				// look into it
-				console.log({ event });
-				// TODO: prevent scroll (might involve setting overflow-hidden/auto)
-			}
-		}
-
-		window.addEventListener("keydown", listen);
-		return () => {
-			window.removeEventListener("keydown", listen);
-		};
-	}, []);
-
+	// TODO: this shouldn't be everything
 	useOutsideClick(parentRef, () => {
 		// console.log('clicked outside');
 		setSelectedSong(null);
 	});
+
+	const sRef = useRef<HTMLDivElement>(null);
+
+	if (isLoading || !library) return <div>Loading...</div>;
+	if (!scrollElement) return null;
+
+
+	return (
+		<div className="flex flex-1 w-full overflow-hidden">
+			<div ref={sRef}>
+				<List
+					path={path}
+					songs={library}
+					scrollElement={sRef}
+				/>
+			</div>
+		</div>
+	)
+
 
 	return (
 		<div className="flex flex-1 w-full overflow-hidden">
@@ -343,9 +321,8 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 										className="absolute left-0 top-0 min-w-full"
 										style={{
 											height: `${virtualItem.size}px`,
-											transform: `translateY(${
-												virtualItem.start - rowVirtualizer.options.scrollMargin
-											}px)`,
+											transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin
+												}px)`,
 										}}
 										onClick={() => {
 											setSelectedSong(row.original);
@@ -410,7 +387,7 @@ function Inspector({
 			>
 				<div className="aspect-square">
 					{selectedImageDataUrl.state === "hasData" &&
-					selectedImageDataUrl.data ? (
+						selectedImageDataUrl.data ? (
 						<img
 							alt=""
 							className="h-full w-full object-contain"
