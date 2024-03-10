@@ -1,4 +1,4 @@
-import { createStore, useAtom, useAtomValue } from "jotai";
+import { atom, createStore, useAtom, useAtomValue } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 export const transparentBgAtom = atomWithStorage("transparentBg", true);
@@ -11,7 +11,8 @@ const defaultThemeStore = {
 	hueValue: 235,
 };
 
-export const themeAtom = atomWithStorage("theme", defaultThemeStore);
+// export const themeAtom = atomWithStorage("theme", defaultThemeStore);
+export const themeAtom = atom(defaultThemeStore);
 
 export function isDarkTheme() {
 	return useAtomValue(themeAtom).theme === "dark";

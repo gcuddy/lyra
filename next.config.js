@@ -5,6 +5,8 @@ const nextConfig = {
   output: "export",
   experimental: {
     swcPlugins: [["@swc-jotai/react-refresh", {}]],
+    forceSwcTransforms: true,
+    scrollRestoration: true,
   },
   images: {
     unoptimized: true,

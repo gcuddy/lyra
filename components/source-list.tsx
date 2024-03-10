@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import NavLink from "./sidebar/link";
-import { HiMiniMusicalNote } from "react-icons/hi2";
 import { Button, ButtonLink } from "./ui/button";
 import { Plus, Queue } from "@phosphor-icons/react";
 import { useState } from "react";
@@ -33,10 +32,10 @@ export default function SourceList() {
         <li>
           <NavLink href="/">
             <div className="flex items-center">
-              <HiMiniMusicalNote
-                size={20}
-                className="mr-2 h-5 w-5 shrink-0 fill-accent"
-              />
+              {/* <HiMiniMusicalNote */}
+              {/*   size={20} */}
+              {/*   className="mr-2 h-5 w-5 shrink-0 fill-accent" */}
+              {/* /> */}
               <span className="truncate">Library</span>
             </div>
           </NavLink>
