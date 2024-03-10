@@ -224,6 +224,35 @@ type LibrarySongProps = {
 	paddingRight: number;
 };
 
-const LibrarySong = memo((props: LibrarySongProps) => {
-	return <>hello</>;
+const LibrarySong = memo(({ row }: LibrarySongProps) => {
+
+	return (
+		<>
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+			<div
+				// onClick={() => {
+				// 	setSelectedSong(row.original);
+				// }}
+				// onDoubleClick={() => {
+				// 	setLoadedSong(row.original);
+				// }}
+				// h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
+				className={"relative flex h-full items-center"}
+			>
+				{row.getVisibleCells().map((cell) => {
+					return (
+						<div
+							role="cell"
+							key={cell.id}
+							className="table-cell shrink-0 px-4 text-xs truncate cursor-default"
+							style={{ width: cell.column.getSize() }}
+						>
+							{flexRender(cell.column.columnDef.cell, cell.getContext())}
+						</div>
+					);
+				})}
+			</div>
+		</>
+	);
+	// return <>hello</>;
 });
