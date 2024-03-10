@@ -7,6 +7,7 @@ import { changeHueValue } from "@/hooks/useTheme";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
+// million-ignore
 export default function Settings() {
 	const router = useRouter();
 	const [themePrefs, setThemePrefs] = useThemePreferences();

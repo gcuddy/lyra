@@ -3,6 +3,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+
+// million-ignore
 const HuePicker = React.forwardRef<
 	React.ElementRef<typeof SliderPrimitive.Root>,
 	React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>

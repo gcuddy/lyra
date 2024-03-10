@@ -29,7 +29,7 @@
     "jotai-immer": "^0.2.0",
     "jotai-tanstack-query": "^0.8.5",
     "lucide-react": "^0.292.0",
-    "million": "latest",
+    "million": "^3.0.6",
     "music-metadata-browser": "^2.5.10",
     "next": "14.0.2",
     "react": "^18",

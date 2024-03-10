@@ -11,6 +11,8 @@ interface Props {
 	toolTipLabel?: string | boolean;
 }
 
+
+// million-ignore
 export default function Setting({ mini, ...props }: PropsWithChildren<Props>) {
 	if (typeof props.description === "string")
 		props.description = (

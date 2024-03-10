@@ -39,6 +39,7 @@ export interface SelectProps<TValue extends string = string>
 	disabled?: boolean;
 }
 
+// million-ignore
 export const Select = forwardRef(function Select<
 	TValue extends string = string,
 >(
@@ -79,6 +80,7 @@ export const Select = forwardRef(function Select<
 	},
 ) => JSX.Element;
 
+// million-ignore
 export function SelectOption(
 	props: PropsWithChildren<{ value: string; default?: boolean }>,
 ) {
