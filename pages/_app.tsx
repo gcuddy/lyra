@@ -13,10 +13,14 @@ const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			staleTime: Infinity,
+			networkMode: "always",
 			refetchOnWindowFocus: false,
 			refetchOnReconnect: false,
 			refetchOnMount: false,
 			placeholderData: keepPreviousData,
+		},
+		mutations: {
+			networkMode: "always",
 		}
 	}
 })
