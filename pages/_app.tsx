@@ -14,87 +14,72 @@ import { Inter } from "next/font/google";
 import { useRouter } from "next/router";
 import { useEffect, useMemo } from "react";
 import { Store } from "tauri-plugin-store-api";
+import { Provider } from 'jotai/react'
+import { useHydrateAtoms } from 'jotai/react/utils'
+import { queryClientAtom } from "jotai-tanstack-query";
+import { Providers } from "./providers";
 const SourceList = dynamic(() => import("@/components/source-list"), {
 	ssr: false,
 });
 
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: Infinity,
+			refetchOnWindowFocus: false,
+			refetchOnReconnect: false,
+			refetchOnMount: false,
+			placeholderData: keepPreviousData,
+		}
+	}
+})
+
+const HydrateAtoms = ({ children }: {
+	children: React.ReactNode
+}) => {
+	useHydrateAtoms([[queryClientAtom, queryClient]])
+	return children
+
+}
+
 const inter = Inter({ subsets: ["latin"] });
+
 export default function App({ Component, pageProps }: AppProps) {
 	// could maybe move this logic into library component
-	const [mainScrollRef, setMainScrollRef] = useMainScrollRef();
-
-	const [, setDirectoryPath] = useDirectoryPath();
-
-	const store = useMemo(() => new Store(".settings.json"), []);
-
-	useEffect(() => {
-		async function getInitialDirectoryPath() {
-			const store = new Store(".settings.json");
-			const directoryPath = await store.get<string>("directory");
-			if (directoryPath && typeof directoryPath === "string") {
-				setDirectoryPath(directoryPath);
-			}
-		}
-		getInitialDirectoryPath();
-	}, [setDirectoryPath]);
-
-	const router = useRouter();
-
-	useEffect(() => {
-		async function getAndSetDirectory() {
-			const selected = await open({
-				directory: true,
-			});
-			if (selected && typeof selected === "string") setDirectoryPath(selected);
-			await store.set("directory", selected);
-			await store.save();
-		}
-		const unlistener = listen("openDirectory", getAndSetDirectory);
-		return () => {
-			unlistener.then((unlisten) => unlisten());
-		};
-	}, [setDirectoryPath, store]);
-
-	useEffect(() => {
-		const unlistener = listen("preferences", () => {
-			router.push("/settings");
-		});
-
-		return () => {
-			unlistener.then((unlisten) => unlisten());
-		};
-	}, [router]);
-
-	const client = new QueryClient({
-		defaultOptions: {
-			queries: {
-				staleTime: Infinity,
-				refetchOnWindowFocus: false,
-				refetchOnReconnect: false,
-				refetchOnMount: false,
-				placeholderData: keepPreviousData,
-			}
-		}
-	})
 
 	return (
-		<QueryClientProvider client={client}>
-			<TooltipProvider>
-				<main
-					className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
-				>
-					<TopBar />
-					<div
-						ref={setMainScrollRef}
-						className="flex grow h-[calc(100%-80px)] w-full"
-					>
-						<div style={{}} className="flex flex-col">
-							<SourceList />
-						</div>
-						<Component {...pageProps} />
-					</div>
-				</main>
-			</TooltipProvider>
+		<QueryClientProvider client={queryClient}>
+			<Provider>
+				<HydrateAtoms>
+					<Providers>
+						<TooltipProvider>
+							<main
+								className={`flex select-none pointer-events-none min-h-screen overscroll-none  h-16 flex-col items-center justify-between bg-app/90 overflow-hidden ${inter.className}`}
+							>
+								<TopBar />
+								<Wrapper>
+									<div style={{}} className="flex flex-col">
+										<SourceList />
+									</div>
+									<Component {...pageProps} />
+								</Wrapper>
+							</main>
+						</TooltipProvider>
+					</Providers>
+				</HydrateAtoms>
+			</Provider>
 		</QueryClientProvider>
 	);
+}
+
+export function Wrapper({ children }: { children: React.ReactNode }) {
+	const [, setMainScrollRef] = useMainScrollRef();
+	return (
+		<div
+			ref={setMainScrollRef}
+			className="flex grow h-[calc(100%-80px)] w-full"
+		>
+			{children}
+		</div>
+	)
 }

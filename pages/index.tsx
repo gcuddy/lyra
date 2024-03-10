@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
 	const [directoryPath, setDirectoryPath] = useDirectoryPath();
+	console.log('directoryPath', directoryPath);
 	const [mainScrollRef] = useMainScrollRef();
 	console.log('loading home');
 	console.log({ directoryPath });

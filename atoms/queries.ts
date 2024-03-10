@@ -39,6 +39,7 @@ export const musicFilesQueryAtom = atomWithQuery((get) => ({
 		const files = parseMusicFiles(dir);
 		return files
 	},
+	staleTime: Infinity,
 	placeholderData: keepPreviousData,
 }))
 
@@ -52,9 +53,10 @@ export const libraryQueryAtom = atomWithQuery((get) => ({
 		})
 	},
 	// NOTE: if this line is uncommented out we get TypeError: WeakMap keys must be objects or non-registered symbols
-	// enabled: !!get(musicFilesQueryAtom).data,
+	enabled: !!get(musicFilesQueryAtom).data,
 	select: (data: RawSong[]) => {
 		const search = get(searchAtom);
+		console.log('searching', search)
 		if (search === "") return data;
 		const filtered = data.filter((song) =>
 			`${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
