@@ -41,15 +41,11 @@ export function useTable({ data }: { data: RawSong[] }) {
 				id: "disc_number",
 				accessorKey: "disc_number",
 				header: "Disc",
-				minSize: 30,
-				maxSize: 50,
 			},
 			{
 				id: "track_number",
 				accessorKey: "track_number",
 				header: "#",
-				minSize: 30,
-				maxSize: 50,
 			},
 			{
 				id: "title",
@@ -66,8 +62,6 @@ export function useTable({ data }: { data: RawSong[] }) {
 				id: "duration_ms",
 				accessorKey: "duration_ms",
 				header: "Time",
-				minSize: 10,
-				maxSize: 200,
 				cell: ({ row }) => {
 					const item = row.original;
 					const dur = format(item.duration_ms ?? 0, "mm:ss");
@@ -78,8 +72,6 @@ export function useTable({ data }: { data: RawSong[] }) {
 				id: "artist",
 				accessorKey: "artist",
 				header: "Artist",
-				minSize: 10,
-				maxSize: undefined,
 				cell: ({ row }) => {
 					const item = row.original;
 					return <div>{item.artist}</div>;
@@ -89,9 +81,6 @@ export function useTable({ data }: { data: RawSong[] }) {
 				id: "album_title",
 				accessorKey: "album_title",
 				header: "Album",
-				minSize: 10,
-				size: 200,
-				maxSize: undefined,
 				cell: ({ row }) => {
 					const item = row.original;
 					return <div>{item.album_title}</div>;
@@ -101,9 +90,6 @@ export function useTable({ data }: { data: RawSong[] }) {
 				id: "genre",
 				accessorKey: "genre",
 				header: "Genre",
-				minSize: 10,
-				size: 200,
-				maxSize: undefined,
 			},
 		],
 		[],

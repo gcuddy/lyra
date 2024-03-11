@@ -19,6 +19,7 @@ type RawSong = {
   audio_bitrate?: number;
   overall_bitrate?: number;
   duration_ms?: number;
+  file_size?: number;
 };
 
 type Picture = {

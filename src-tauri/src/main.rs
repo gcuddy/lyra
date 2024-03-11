@@ -129,7 +129,7 @@ fn greet(name: &str) -> String {
 #[derive(Debug, serde::Serialize)]
 pub struct Picture {
     /// The picture's MIME type.
-    pub mime_type: String,
+    // pub mime_type: String,
     /// The image data.
     pub data: Vec<u8>,
 }
@@ -227,8 +227,7 @@ async fn read_music_file(path: &str) -> Option<Song> {
 
     println!("song: {:?}", song);
 
-
-    return Some(song);
+    Some(song)
 }
 
 #[tauri::command]
@@ -281,7 +280,7 @@ fn get_album_cover(path: &str) -> Option<Picture> {
     match cover {
         Some(cover) => {
             Some(Picture {
-                mime_type: cover.mime_type().to_string(),
+                // mime_type: cover.mime_type().to_string(),
                 data: cover.data().to_vec(),
             })
         }

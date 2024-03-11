@@ -1,5 +1,5 @@
 import { isInspectorOpenAtom } from "@/atoms/inspector";
-import { filteredSongsCountAtom } from "@/atoms/library";
+import { filteredSongsCountAtom, songsSizeAtom } from "@/atoms/library";
 import { cn } from "@/lib/utils";
 import { Info } from "@phosphor-icons/react";
 import { listen } from "@tauri-apps/api/event";
@@ -11,7 +11,6 @@ import { Button } from "./ui/button";
 export const BOTTOM_BAR_HEIGHT = 32;
 
 export function StatusBar() {
-  const [filteredSongsCount] = useAtom(filteredSongsCountAtom);
   const [isInspectorOpen, setIsInspectorOpen] = useAtom(isInspectorOpenAtom);
 
   useEffect(() => {
@@ -36,8 +35,9 @@ export function StatusBar() {
         height: BOTTOM_BAR_HEIGHT,
       }}
     >
-      <div className="flex-grow">
-        <span>{filteredSongsCount} songs</span>
+      <div className="flex gap-2 flex-grow">
+        <SongCount />
+        <SongsSize />
       </div>
       <div>
         <Button
@@ -59,4 +59,14 @@ export function StatusBar() {
         </div> */}
     </div>
   );
+}
+
+function SongCount() {
+  const [filteredSongsCount] = useAtom(filteredSongsCountAtom);
+  return <span>{filteredSongsCount} songs</span>;
+}
+
+function SongsSize() {
+  const [songsSize] = useAtom(songsSizeAtom);
+  return <span>{songsSize} songs</span>;
 }

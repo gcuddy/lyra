@@ -79,7 +79,7 @@ export default function List() {
 		<>
 			<div
 				ref={tableRef}
-				className=" bg-app relative overscroll-none"
+				className=" bg-app relative overscroll-x-none overflow-auto"
 				style={{
 					height: "100%",
 					width: "100%",
@@ -88,9 +88,9 @@ export default function List() {
 					paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
 				}}
 			>
-				<div className="sticky top-0 z-10">
+				<div className="sticky top-0 z-10 w-fit">
 					<ContextMenu.Root trigger={<div>
-						<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
+						<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overscroll-x-none">
 							{table.getHeaderGroups().map((headerGroup) => (
 								<div
 									key={headerGroup.id}
@@ -170,7 +170,7 @@ export default function List() {
 					</ContextMenu.Root>
 				</div>
 				{/* table body ref */}
-				<div className="overflow-x-auto overscroll-x-none">
+				<div className="">
 					<div
 						className="relative"
 						style={{
@@ -199,7 +199,7 @@ export default function List() {
 									>
 										<div
 											className={cn(
-												"absolute inset-0 rounded-md border",
+												"absolute inset-0 w-fit rounded-md border",
 												virtualItem.index % 2 === 0 && "bg-app-darkBox",
 												selected
 													? "border-accent !bg-accent/10"
