@@ -57,7 +57,7 @@ export const buttonStyles = tv({
   },
 });
 
-export interface ButtonBaseProps extends VariantProps<typeof buttonStyles> {}
+export interface ButtonBaseProps extends VariantProps<typeof buttonStyles> { }
 
 export type ButtonProps = ButtonBaseProps &
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -84,7 +84,8 @@ export const Button = forwardRef<
 >(({ className, ...props }, ref) => {
   className = cn(buttonStyles(props), className);
   return hasHref(props) ? (
-    <a
+    <Link
+      href={props.href as string}
       {...props}
       ref={ref as any}
       className={cx(className, "inline-block no-underline")}

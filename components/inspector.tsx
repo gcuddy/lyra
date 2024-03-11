@@ -1,21 +1,19 @@
-import { selectedSongAtom, useSelectedImageDataUrl } from "@/atoms/library";
-import { format } from "date-fns";
+import { selectedImageQueryAtom, selectedSongAtom, useSelectedImageDataUrl } from "@/atoms/library";
 import { tw } from "@/lib/tailwind";
+import { format } from "date-fns";
 import { useAtomValue } from "jotai";
-import { ReactNode, RefObject, useEffect, useState } from "react";
-import Sticky from "react-sticky-el";
+import { ReactNode, useEffect, useState } from "react";
 import { BOTTOM_BAR_HEIGHT } from "./bottom-bar";
 import { Tooltip } from "./ui/tooltip";
 
 import {
   Guitar,
-  type Icon as PhosphorIcon,
   MicrophoneStage,
   MusicNoteSimple,
   VinylRecord,
+  type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
-import { useMainScrollRef } from "@/atoms/refs";
-import { useBrowserContext } from "@/context/browser";
+import { Album } from "lucide-react";
 export const INSPECTOR_WIDTH = 260;
 
 export const MetaContainer = tw.div`flex flex-col px-4 py-2 gap-1`;
@@ -51,7 +49,6 @@ export const MetaData = ({
 export function Inspector() {
 
   const selectedSong = useAtomValue(selectedSongAtom);
-  const [selectedImageDataUrl] = useSelectedImageDataUrl();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -68,19 +65,8 @@ export function Inspector() {
       }}
       className="flex flex-col shrink-0 gap-2 top-0 pl-3 pr-1.5"
     >
-      <div className="aspect-square">
-        {selectedImageDataUrl.state === "hasData" &&
-          selectedImageDataUrl.data ? (
-          <img
-            alt=""
-            className="h-full w-full object-contain"
-            src={selectedImageDataUrl.data}
-          />
-        ) : (
-          <div className="bg-app-darkBox h-full w-full" />
-        )}
-      </div>
-      <div className="border border-app-line shadow-app-shade/10 bg-app-box rounded-lg py-0.5 pointer-events-auto flex select-text flex-col overflow-hidden ">
+      <AlbumArtWrapper />
+      <div className="border border-app-line shadow-app-shade/10 bg-app-box rounded-lg py-0.5 pointer-events-auto flex select-text flex-col overflow-y-auto">
         {!selectedSong ? (
           <div className="flex h-[240px] items-center justify-center text-sm text-ink-dul">
             No selection
@@ -136,4 +122,34 @@ export function Inspector() {
       </div>
     </div>
   );
+}
+
+function AlbumArtPlaceholder() {
+  return (
+    <div className="aspect-square">
+      <div className="bg-app-darkBox h-full w-full">
+      </div>
+    </div>
+  );
+}
+
+function AlbumArtWrapper() {
+  const selectedSong = useAtomValue(selectedSongAtom);
+  const query = useAtomValue(selectedImageQueryAtom)
+  if (!selectedSong) return (<AlbumArtPlaceholder />)
+  if (!query) return (<AlbumArtPlaceholder />)
+  console.log({ query })
+
+  return <div className="aspect-square">
+    {query.data &&
+      query.data ? (
+      <img
+        alt=""
+        className="h-full w-full object-contain"
+        src={query.data}
+      />
+    ) : (
+      <div className="bg-app-darkBox h-full w-full" />
+    )}
+  </div>
 }

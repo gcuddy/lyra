@@ -5,6 +5,8 @@ import { atomEffect } from "jotai-effect";
 import { atomWithStorage, loadable } from "jotai/utils";
 
 import { queueAtom } from "./queue";
+import { atomWithQuery } from "jotai-tanstack-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 // const libraryAtom = atomWithStorage<RawSong[]>("library", []);
 export const libraryAtom = atom<RawSong[]>([]);
@@ -169,6 +171,12 @@ export const filteredSongsSizeAtom = atom((get) => {
 	return size;
 })
 
+export const filteredSongsDurationAtom = atom((get) => {
+	const songs = get(filteredSongsAtom);
+	const duration = songs.reduce((acc, song) => acc + (song.duration_ms ?? 0), 0);
+	return duration;
+})
+
 export const songsSizeAtom = atom((get) => {
 	const songs = get(songsAtom);
 	const size = songs.reduce((acc, song) => acc + (song.file_size ?? 0), 0);
@@ -240,6 +248,7 @@ const selectedImageDataUrl = atom(async (get) => {
 	return dataURL;
 });
 
+// TODO: cache this either with jotai or react query
 const loadedImageDataUrl = atom(async (get) => {
 	const song = await get(loadedSongAlbumArt);
 	if (!song) return;
@@ -250,6 +259,28 @@ const loadedImageDataUrl = atom(async (get) => {
 });
 
 export const loadableLoadedImageDataUrl = loadable(loadedImageDataUrl);
+
+function useAlbumArtQuery(path: string) {
+	return queryOptions({
+		queryKey: ["image", path],
+		enabled: !!path,
+		queryFn: async () => {
+			const cover = await invoke<Picture>("get_album_cover", {
+				path: path,
+			});
+			console.log('got cover for', path)
+			const uint8Array = new Uint8Array(cover.data);
+			const blob = new Blob([uint8Array]);
+			const dataURL = URL.createObjectURL(blob);
+			return dataURL;
+		},
+		placeholderData: keepPreviousData
+	})
+}
+export const selectedImageQueryAtom = atomWithQuery(get => {
+	const song = get(selectedSongAtom);
+	return useAlbumArtQuery(song?.path ?? "");
+})
 
 export function useLoadedImageDataUrl() {
 	return [...useAtom(loadableLoadedImageDataUrl)] as const;

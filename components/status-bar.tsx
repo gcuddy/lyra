@@ -1,10 +1,10 @@
 import { isInspectorOpenAtom } from "@/atoms/inspector";
-import { filteredSongsSizeAtom, filteredSongsCountAtom, songsSizeAtom } from "@/atoms/library";
+import { filteredSongsSizeAtom, filteredSongsCountAtom, songsSizeAtom, filteredSongsDurationAtom } from "@/atoms/library";
 import { cn } from "@/lib/utils";
 import { Info } from "@phosphor-icons/react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
 import { Button } from "./ui/button";
 
@@ -38,6 +38,7 @@ export function StatusBar() {
       <div className="flex gap-2 flex-grow">
         <SongCount />
         <SongsSize />
+        <SongsTime />
       </div>
       <div>
         <Button
@@ -79,4 +80,18 @@ function SongsSize() {
     return `${(mb / 1024).toFixed(2)} GB`;
   }, [songsSize])
   return <span>{formattedSize}</span>;
+}
+
+function SongsTime() {
+  const songsTimeMs = useAtomValue(filteredSongsDurationAtom);
+
+  const formattedDuration = useMemo(() => {
+    const hours = Math.floor(songsTimeMs / 3600000);
+    const minutes = Math.floor((songsTimeMs % 3600000) / 60000);
+    const seconds = Math.floor((songsTimeMs % 60000) / 1000);
+    return `${hours ? `${hours}:` : ""}${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }, [songsTimeMs])
+
+  return <span>{formattedDuration}</span>;
+
 }

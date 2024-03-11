@@ -237,7 +237,7 @@ export default function List() {
 									>
 										<div
 											className={cn(
-												"absolute inset-0 w-fit rounded-md border",
+												"absolute inset-0 w-max rounded-md border",
 												virtualItem.index % 2 === 0 && "bg-app-darkBox",
 												selected
 													? "border-accent !bg-accent/10"
