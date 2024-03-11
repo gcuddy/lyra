@@ -11,7 +11,6 @@ import { produce } from "immer";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { For } from "million/react";
 import {
-	RefObject,
 	memo,
 	useCallback,
 	useEffect,
@@ -20,10 +19,9 @@ import {
 	useState,
 } from "react";
 import { useOutsideClick } from "rooks";
-import { BOTTOM_BAR_HEIGHT, INSPECTOR_WIDTH } from "./library";
+import { BOTTOM_BAR_HEIGHT, BottomBar } from "./bottom-bar";
+import { INSPECTOR_WIDTH, Inspector } from "./inspector";
 import { ContextMenu } from "./ui/context-menu";
-import { BottomBar } from "./bottom-bar";
-import { Inspector } from "./inspector";
 
 type LibraryProps = {
 	path: string;
