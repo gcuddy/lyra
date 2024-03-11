@@ -1,5 +1,5 @@
 import { isInspectorOpenAtom } from "@/atoms/inspector";
-import { selectedSongAtom, setLoadedSongAndUpdateQueue } from "@/atoms/library";
+import { filteredSongsAtom, selectedSongAtom, setLoadedSongAndUpdateQueue, songsAtom } from "@/atoms/library";
 import { cn } from "@/lib/utils";
 import { useTable } from "@/view/table";
 import { CaretDown, CaretUp } from "@phosphor-icons/react";
@@ -23,15 +23,12 @@ import { BOTTOM_BAR_HEIGHT, BottomBar } from "./bottom-bar";
 import { INSPECTOR_WIDTH, Inspector } from "./inspector";
 import { ContextMenu } from "./ui/context-menu";
 
-type LibraryProps = {
-	path: string;
-	songs: RawSong[];
-};
-
-export default function List({ path, songs, }: LibraryProps) {
+export default function List() {
 	const tableRef = useRef<HTMLDivElement>(null);
 	const [listOffset, setListOffset] = useState(0);
 	const [selectedSong, setSelectedSong] = useAtom(selectedSongAtom);
+	const [songs] = useAtom(filteredSongsAtom);
+
 	const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
 	const isInspectorOpen = useAtomValue(isInspectorOpenAtom);
 
@@ -231,10 +228,10 @@ export default function List({ path, songs, }: LibraryProps) {
 							}}
 						</For>
 					</div>
-					<BottomBar />
+					{/* <BottomBar /> */}
 				</div>
 			</div>
-			{isInspectorOpen && <Inspector />}
+			{/* {isInspectorOpen && <Inspector />} */}
 		</>
 	);
 }

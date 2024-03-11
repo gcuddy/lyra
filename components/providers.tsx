@@ -1,4 +1,5 @@
 import { useDirectoryPath } from "@/atoms/paths";
+import { useQueryClient } from "@tanstack/react-query";
 import { open } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
 import { useRouter } from "next/router";
@@ -7,6 +8,7 @@ import { Store } from "tauri-plugin-store-api";
 
 export function Providers({ children }: { children: React.ReactNode }) {
 	const [, setDirectoryPath] = useDirectoryPath();
+	const queryClient = useQueryClient();
 
 	const store = useMemo(() => new Store(".settings.json"), []);
 
@@ -16,6 +18,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 			const directoryPath = await store.get<string>("directory");
 			if (directoryPath && typeof directoryPath === "string") {
 				setDirectoryPath(directoryPath);
+				queryClient.invalidateQueries({
+					queryKey: ["musicFiles"]
+				});
+				queryClient.invalidateQueries({
+					queryKey: ["library"]
+				});
+
 			}
 		}
 		getInitialDirectoryPath();

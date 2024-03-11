@@ -34,10 +34,10 @@ export const setLoadedSongAndUpdateQueue = atom(
 	(get, set, song: RawSong) => {
 		// TODO: add prefs of how to handle queue-ing
 		set(loadedSongAtom, song);
-		const library = get(libraryAtom);
+		const songs = get(songsAtom);
 		const queue = get(queueAtom);
 		// get songs in album and add to queue
-		const albumSongs = library
+		const albumSongs = songs
 			.filter(
 				(s) =>
 					s.album_title === song.album_title &&
@@ -56,7 +56,6 @@ export const setLoadedSongAndUpdateQueue = atom(
 				const btrackNum = b.track_number ?? 0;
 				return atrackNum - btrackNum;
 			});
-		console.log({ songsToAddToQueue: albumSongs });
 		set(queueAtom, albumSongs);
 	},
 );
@@ -142,6 +141,26 @@ export const filteredLibraryAtom = atom((get) => {
 	);
 	return filtered;
 });
+
+
+export const songsAtom = atom<RawSong[]>([]);
+
+export const filteredSongsAtom = atom((get) => {
+	const songs = get(songsAtom);
+	const search = get(searchAtom);
+	if (search === "") return songs;
+	const filtered = songs.filter((song) =>
+		`${song.title} ${song.artist} ${song.album_artist} ${song.album_title}`
+			.toLowerCase()
+			.includes(search.toLowerCase()),
+	);
+	return filtered;
+});
+
+export const filteredSongsCountAtom = atom((get) => {
+	const songs = get(filteredSongsAtom);
+	return songs.length;
+})
 
 export const libraryCountAtom = atom((get) => {
 	const library = get(libraryAtom);

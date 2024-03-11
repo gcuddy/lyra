@@ -24,6 +24,7 @@ import {
 	filteredLibraryCountAtom,
 	selectedSongAtom,
 	setLoadedSongAndUpdateQueue,
+	songsAtom,
 	useSelectedImageDataUrl,
 } from "@/atoms/library";
 import { leftSidebarWidthAtom } from "@/atoms/sizes";
@@ -42,6 +43,7 @@ import { Tooltip } from "./ui/tooltip";
 import List from "./list";
 import { libraryQueryAtom, musicFilesQueryAtom } from "@/atoms/queries";
 import { BrowserContextProvider, useBrowser } from "@/context/browser";
+import { Browser } from "./browser";
 
 interface LibraryProps {
 	path: string;
@@ -54,10 +56,18 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 	const parentRef = useRef<HTMLDivElement>(null);
 	const browser = useBrowser();
 	const { data: musicFiles } = useAtomValue(musicFilesQueryAtom);
+	const [, setSongs] = useAtom(songsAtom);
 	console.log({ musicFiles })
 	const { data: library, isLoading } = useAtomValue(libraryQueryAtom);
 	console.log({ library });
 
+
+	// yikes, is this what we're supposed to do?
+	useEffect(() => {
+		if (library) {
+			setSongs(library);
+		}
+	}, [library, setSongs]);
 	// TODO: this shouldn't be everything
 	// useOutsideClick(parentRef, () => {
 	// 	// console.log('clicked outside');
@@ -70,14 +80,15 @@ export default function Library({ path, scrollElement }: LibraryProps) {
 	return (
 		// TODO: put in its own component, since this should wrap list
 		// TODO: figure out overscroll
-		<div className="flex flex-1 relative">
-			<div className="h-full w-full">
-				<List
-					path={path}
-					songs={library}
-				/>
-			</div>
-		</div>
+		<>
+			<Browser />
+			{/* <div className="flex flex-1 relative"> */}
+			{/* 	<div className="h-full w-full"> */}
+			{/* 		<List */}
+			{/* 		/> */}
+			{/* 	</div> */}
+			{/* </div> */}
+		</>
 	)
 
 

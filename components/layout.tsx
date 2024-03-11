@@ -49,8 +49,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </NavLink>
                 </li>
               </ul>
-              Sources here
-              {/* <SourceList /> */}
             </div>
             {children}
           </div>
