@@ -22,6 +22,8 @@ import {
 import { useOutsideClick } from "rooks";
 import { BOTTOM_BAR_HEIGHT, INSPECTOR_WIDTH } from "./library";
 import { ContextMenu } from "./ui/context-menu";
+import { BottomBar } from "./bottom-bar";
+import { Inspector } from "./inspector";
 
 type LibraryProps = {
 	path: string;
@@ -79,159 +81,163 @@ export default function List({ path, songs, }: LibraryProps) {
 
 
 	return (
-		<div
-			ref={tableRef}
-			className=" bg-app relative overscroll-none"
-			style={{
-				height: "100%",
-				width: "100%",
-				overflow: "auto",
-				pointerEvents: "auto",
-				paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
-			}}
-		>
-			<div className="sticky top-0 z-10">
-				<ContextMenu.Root trigger={<div>
-					<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
-						{table.getHeaderGroups().map((headerGroup) => (
-							<div
-								key={headerGroup.id}
-								className="flex w-fit divide-x divide-app-line"
-							>
-								{headerGroup.headers.map((header, i) => {
-									const size = header.column.getSize();
-
-									// const orderKey
-									const cellContent = flexRender(
-										header.column.columnDef.header,
-										header.getContext(),
-									);
-
-									const firstSort = table.getState().sorting[0];
-
-									const isActive = header.id === firstSort?.id;
-
-									return (
-										<div key={header.id}>
-											{header.isPlaceholder ? null : (
-												<button
-													type="button"
-													style={{
-														width: size,
-													}}
-													className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
-													onClick={() => {
-														// see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
-														table.setSorting(
-															produce((draft) => {
-																if (draft[0].id === header.id) {
-																	draft[0].desc = !draft[0].desc;
-																}
-																draft[0].id = header.id;
-															}),
-														);
-													}}
-												>
-													<div className="truncate">
-														<span className={clsx(isActive && "font-medium")}>
-															{cellContent}
-														</span>
-													</div>
-													{isActive ? (
-														firstSort?.desc ? (
-															<CaretDown className="shrink-0 text-ink-faint" />
-														) : (
-															<CaretUp className="shrink-0 text-ink-faint" />
-														)
-													) : null}
-												</button>
-											)}
-										</div>
-									);
-								})}
-							</div>
-						))}
-					</div>
-				</div>}>
-					{table.getAllLeafColumns().map((column) => {
-						if (column.id === 'name') return null;
-						return (
-							<ContextMenu.CheckboxItem
-								key={column.id}
-								checked={column.getIsVisible()}
-								// TODO: this doesn't immediately trigger virtualizer to update
-								onSelect={column.getToggleVisibilityHandler()}
-								label={
-									typeof column.columnDef.header === 'string'
-										? column.columnDef.header
-										: column.id
-								}
-							/>
-						);
-					})}
-				</ContextMenu.Root>
-			</div>
-			{/* table body ref */}
-			<div className="overflow-x-auto overscroll-x-none">
-				<div
-					className="relative"
-					style={{
-						height: `${rowVirtualizer.getTotalSize()}px`,
-					}}
-				>
-					<For each={rowVirtualizer.getVirtualItems()} as="div">
-						{(virtualItem) => {
-							// we don't have to use normal td's here because it's a desktop app
-
-							const row = rows[virtualItem.index];
-
-							const selected = selectedSong?.id === row?.id;
-
-							if (!row) return <></>;
-
-							return (
+		<>
+			<div
+				ref={tableRef}
+				className=" bg-app relative overscroll-none"
+				style={{
+					height: "100%",
+					width: "100%",
+					overflow: "auto",
+					pointerEvents: "auto",
+					paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
+				}}
+			>
+				<div className="sticky top-0 z-10">
+					<ContextMenu.Root trigger={<div>
+						<div className="border-b bg-app/90 backdrop-saturate-[1.2] backdrop-blur-lg border-app-line overflow-x-auto overscroll-x-none">
+							{table.getHeaderGroups().map((headerGroup) => (
 								<div
-									key={row.id}
-									className="absolute left-0 top-0 min-w-full"
-									style={{
-										height: `${virtualItem.size}px`,
-										transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin
-											}px)`,
-									}}
+									key={headerGroup.id}
+									className="flex w-fit divide-x divide-app-line"
 								>
+									{headerGroup.headers.map((header, i) => {
+										const size = header.column.getSize();
+
+										// const orderKey
+										const cellContent = flexRender(
+											header.column.columnDef.header,
+											header.getContext(),
+										);
+
+										const firstSort = table.getState().sorting[0];
+
+										const isActive = header.id === firstSort?.id;
+
+										return (
+											<div key={header.id}>
+												{header.isPlaceholder ? null : (
+													<button
+														type="button"
+														style={{
+															width: size,
+														}}
+														className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
+														onClick={() => {
+															// see table.tsx - we set [0] because [1] is album and [2] is track, for tiebreakers
+															table.setSorting(
+																produce((draft) => {
+																	if (draft[0].id === header.id) {
+																		draft[0].desc = !draft[0].desc;
+																	}
+																	draft[0].id = header.id;
+																}),
+															);
+														}}
+													>
+														<div className="truncate">
+															<span className={clsx(isActive && "font-medium")}>
+																{cellContent}
+															</span>
+														</div>
+														{isActive ? (
+															firstSort?.desc ? (
+																<CaretDown className="shrink-0 text-ink-faint" />
+															) : (
+																<CaretUp className="shrink-0 text-ink-faint" />
+															)
+														) : null}
+													</button>
+												)}
+											</div>
+										);
+									})}
+								</div>
+							))}
+						</div>
+					</div>}>
+						{table.getAllLeafColumns().map((column) => {
+							if (column.id === 'name') return null;
+							return (
+								<ContextMenu.CheckboxItem
+									key={column.id}
+									checked={column.getIsVisible()}
+									// TODO: this doesn't immediately trigger virtualizer to update
+									onSelect={column.getToggleVisibilityHandler()}
+									label={
+										typeof column.columnDef.header === 'string'
+											? column.columnDef.header
+											: column.id
+									}
+								/>
+							);
+						})}
+					</ContextMenu.Root>
+				</div>
+				{/* table body ref */}
+				<div className="overflow-x-auto overscroll-x-none">
+					<div
+						className="relative"
+						style={{
+							height: `${rowVirtualizer.getTotalSize()}px`,
+						}}
+					>
+						<For each={rowVirtualizer.getVirtualItems()} as="div">
+							{(virtualItem) => {
+								// we don't have to use normal td's here because it's a desktop app
+
+								const row = rows[virtualItem.index];
+
+								const selected = selectedSong?.id === row?.id;
+
+								if (!row) return <></>;
+
+								return (
 									<div
-										className={cn(
-											"absolute inset-0 rounded-md border",
-											virtualItem.index % 2 === 0 && "bg-app-darkBox",
-											selected
-												? "border-accent !bg-accent/10"
-												: "border-transparent",
-										)}
-										onClick={() => {
-											setSelectedSong(row.original);
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												setLoadedSong(row.original);
-											}
-										}}
-										onDoubleClick={() => {
-											setLoadedSong(row.original);
+										key={row.id}
+										className="absolute left-0 top-0 min-w-full"
+										style={{
+											height: `${virtualItem.size}px`,
+											transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin
+												}px)`,
 										}}
 									>
-										<LibrarySong
-											row={row}
-											paddingLeft={padding.left}
-											paddingRight={padding.right}
-										/>
+										<div
+											className={cn(
+												"absolute inset-0 rounded-md border",
+												virtualItem.index % 2 === 0 && "bg-app-darkBox",
+												selected
+													? "border-accent !bg-accent/10"
+													: "border-transparent",
+											)}
+											onClick={() => {
+												setSelectedSong(row.original);
+											}}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													setLoadedSong(row.original);
+												}
+											}}
+											onDoubleClick={() => {
+												setLoadedSong(row.original);
+											}}
+										>
+											<LibrarySong
+												row={row}
+												paddingLeft={padding.left}
+												paddingRight={padding.right}
+											/>
+										</div>
 									</div>
-								</div>
-							);
-						}}
-					</For>
+								);
+							}}
+						</For>
+					</div>
+					<BottomBar />
 				</div>
 			</div>
-		</div>
+			{isInspectorOpen && <Inspector />}
+		</>
 	);
 }
 
