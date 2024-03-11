@@ -169,6 +169,12 @@ async fn read_music_file(path: &str) -> Option<Song> {
         return None;
     }
 
+
+    let file_md = match _path.metadata() {
+        Ok(md) => md,
+        Err(_) => return None,
+    };
+
     let tagged_file =
         match Probe::open(_path) {
             // TODO: clean up this .expect()
@@ -220,7 +226,7 @@ async fn read_music_file(path: &str) -> Option<Song> {
         track_total: tag.track_total().map(|f| f as u16),
         disc_number: tag.disk().map(|f| f as u16),
         disc_total: tag.disk_total().map(|f| f as u16),
-        file_size: Some(21231_u64),
+        file_size: Some(file_md.len()),
         audio_bitrate: tagged_file.properties().audio_bitrate(),
         overall_bitrate: tagged_file.properties().overall_bitrate(),
     };

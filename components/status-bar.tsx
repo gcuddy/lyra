@@ -1,11 +1,11 @@
 import { isInspectorOpenAtom } from "@/atoms/inspector";
-import { filteredSongsCountAtom, songsSizeAtom } from "@/atoms/library";
+import { filteredSongsSizeAtom, filteredSongsCountAtom, songsSizeAtom } from "@/atoms/library";
 import { cn } from "@/lib/utils";
 import { Info } from "@phosphor-icons/react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useAtom } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "./ui/button";
 
 export const BOTTOM_BAR_HEIGHT = 32;
@@ -30,7 +30,7 @@ export function StatusBar() {
 
   return (
     <div
-      className="z-10 w-full bg-app/80 flex justify-between items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
+      className="z-10 w-full bg-app/80 flex justify-between pointer-events-auto items-center gap-1 border-t border-t-app-line px-3.5 text-xs text-ink-dull backdrop-blur-lg"
       style={{
         height: BOTTOM_BAR_HEIGHT,
       }}
@@ -67,6 +67,16 @@ function SongCount() {
 }
 
 function SongsSize() {
-  const [songsSize] = useAtom(songsSizeAtom);
-  return <span>{songsSize} songs</span>;
+  const [songsSize] = useAtom(filteredSongsSizeAtom);
+  const formattedSize = useMemo(() => {
+    const mb = (songsSize / 1024 / 1024);
+    if (mb < 1) {
+      return `${(songsSize / 1024).toFixed(2)} KB`;
+    }
+    if (mb < 1024) {
+      return `${mb.toFixed(2)} MB`;
+    }
+    return `${(mb / 1024).toFixed(2)} GB`;
+  }, [songsSize])
+  return <span>{formattedSize}</span>;
 }

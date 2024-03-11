@@ -1,4 +1,4 @@
-import { Provider, createStore, useAtom } from "jotai"
+import { Provider, createStore, useAtom, useAtomValue } from "jotai"
 import { StatusBar } from "./status-bar"
 import { isInspectorOpenAtom } from "@/atoms/inspector"
 import { Inspector } from "./inspector"
@@ -25,6 +25,6 @@ export function Browser() {
 }
 
 function InspectorWrapper() {
-  const [showInspector] = useAtom(isInspectorOpenAtom)
+  const showInspector = useAtomValue(isInspectorOpenAtom)
   return showInspector ? <Inspector /> : null
 }

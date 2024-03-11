@@ -66,7 +66,7 @@ export function Inspector() {
         width: INSPECTOR_WIDTH,
         paddingBottom: BOTTOM_BAR_HEIGHT,
       }}
-      className="absolute right-1.5 flex flex-col gap-2 top-0 pl-3 pr-1.5"
+      className="flex flex-col shrink-0 gap-2 top-0 pl-3 pr-1.5"
     >
       <div className="aspect-square">
         {selectedImageDataUrl.state === "hasData" &&

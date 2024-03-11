@@ -3,7 +3,7 @@ import { filteredSongsAtom, selectedSongAtom, setLoadedSongAndUpdateQueue, songs
 import { cn } from "@/lib/utils";
 import { useTable } from "@/view/table";
 import { CaretDown, CaretUp } from "@phosphor-icons/react";
-import { Row, flexRender } from "@tanstack/react-table";
+import { ColumnSizingState, Row, flexRender } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { emit } from "@tauri-apps/api/event";
 import clsx from "clsx";
@@ -22,7 +22,11 @@ import { useOutsideClick } from "rooks";
 import { BOTTOM_BAR_HEIGHT, BottomBar } from "./bottom-bar";
 import { INSPECTOR_WIDTH, Inspector } from "./inspector";
 import { ContextMenu } from "./ui/context-menu";
+import useResizeObserver from "use-resize-observer";
 
+
+export const TABLE_PADDING_X = 16;
+export const TABLE_PADDING_Y = 12;
 export default function List() {
 	const tableRef = useRef<HTMLDivElement>(null);
 	const [listOffset, setListOffset] = useState(0);
@@ -39,6 +43,7 @@ export default function List() {
 	const { table } = useTable({ data: songs });
 
 	const { rows } = table.getRowModel();
+	const { columnSizing } = table.getState();
 
 	//   or rows.length? does it matter?
 	const count = rows?.length || songs?.length || 0;
@@ -74,6 +79,34 @@ export default function List() {
 		setSelectedSong(null);
 	});
 
+	useResizeObserver({
+		ref: tableRef,
+		onResize: ({ width }) => {
+			if (!width) return;
+
+			const sizing = table
+				.getVisibleLeafColumns()
+				.reduce(
+					(sizing, column) => ({ ...sizing, [column.id]: column.getSize() }),
+					{} as ColumnSizingState
+				);
+			const columnsWidth =
+				Object.values(sizing).reduce((a, b) => a + b, 0) + TABLE_PADDING_X * 2;
+
+			console.log({ width, columnsWidth, sizing });
+			console.log("resize");
+			const newNameSize = (sizing.title ?? 0) + (width - columnsWidth);
+			const minNameColSize = table.getColumn('title')?.columnDef.minSize;
+			console.log({ newNameSize, minNameColSize });
+
+			if (minNameColSize !== undefined && newNameSize < minNameColSize) return;
+
+			table.setColumnSizing({
+				...columnSizing,
+				title: newNameSize
+			});
+		},
+	})
 
 	return (
 		<>
@@ -85,7 +118,7 @@ export default function List() {
 					width: "100%",
 					overflow: "auto",
 					pointerEvents: "auto",
-					paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
+					// paddingRight: isInspectorOpen ? INSPECTOR_WIDTH + 4 : 0,
 				}}
 			>
 				<div className="sticky top-0 z-10 w-fit">
@@ -115,7 +148,12 @@ export default function List() {
 													<button
 														type="button"
 														style={{
-															width: size,
+															width: i === 0 ||
+																i ===
+																headerGroup.headers.length -
+																1
+																? size + TABLE_PADDING_X
+																: size
 														}}
 														className="relative select-none cursor-default flex items-center justify-between gap-3 px-4 py-2 text-xs active:bg-app-focus"
 														onClick={() => {
@@ -243,8 +281,39 @@ type LibrarySongProps = {
 	paddingRight: number;
 };
 
-const LibrarySong = memo(({ row }: LibrarySongProps) => {
+const LibrarySong = ({ row }: LibrarySongProps) => {
+	return (
+		<>
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+			<div
+				// onClick={() => {
+				// 	setSelectedSong(row.original);
+				// }}
+				// onDoubleClick={() => {
+				// 	setLoadedSong(row.original);
+				// }}
+				// h-full grow grid grid-cols-3 items-center select-none cursor-default truncate
+				className={"relative flex h-full items-center"}
+			>
+				{row.getVisibleCells().map((cell) => {
+					return (
+						<div
+							role="cell"
+							key={cell.id}
+							className="table-cell shrink-0 px-4 text-xs truncate cursor-default"
+							style={{ width: cell.column.getSize() }}
+						>
+							{flexRender(cell.column.columnDef.cell, cell.getContext())}
+						</div>
+					);
+				})}
+			</div>
+		</>
+	);
+	// return <>hello</>;
+}
 
+const LibrarySongMemoized = memo(({ row }: LibrarySongProps) => {
 	return (
 		<>
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
@@ -275,5 +344,4 @@ const LibrarySong = memo(({ row }: LibrarySongProps) => {
 	);
 	// return <>hello</>;
 });
-
-LibrarySong.displayName = "LibrarySong";
+LibrarySongMemoized.displayName = "LibrarySong";

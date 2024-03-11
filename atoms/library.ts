@@ -162,6 +162,13 @@ export const filteredSongsCountAtom = atom((get) => {
 	return songs.length;
 })
 
+
+export const filteredSongsSizeAtom = atom((get) => {
+	const songs = get(filteredSongsAtom);
+	const size = songs.reduce((acc, song) => acc + (song.file_size ?? 0), 0);
+	return size;
+})
+
 export const songsSizeAtom = atom((get) => {
 	const songs = get(songsAtom);
 	const size = songs.reduce((acc, song) => acc + (song.file_size ?? 0), 0);
