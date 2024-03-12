@@ -2,33 +2,12 @@ import NavLink from "./sidebar/link";
 import { Gear, MusicNotes, Queue, ListPlus, Playlist } from "@phosphor-icons/react";
 import { Button } from "./ui/button";
 import { Tooltip } from "./ui/tooltip";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogPortal, DialogOverlay, DialogClose, DialogFooter, DialogDescription } from "./ui/dialog"
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogFooter, DialogDescription } from "./ui/dialog"
 import { Input } from "./ui/input";
-import { Store } from "tauri-plugin-store-api";
 import { nanoid } from "nanoid";
-import { useEffect, useState } from "react";
-import { atom, useAtom } from "jotai";
+import { useState } from "react";
 import { useRouter } from "next/router";
-
-const playlistsAtom = atom<Playlist[]>([]);
-
-function usePlaylists() {
-  const [playlists, _setPlaylists] = useAtom(playlistsAtom);
-  const store = new Store("playlists.json");
-
-  useEffect(() => {
-    store.get<Playlist[]>("playlists").then((playlists) => {
-      _setPlaylists(playlists ?? []);
-    });
-  }, []);
-
-  const setPlaylists = async (playlists: Playlist[]) => {
-    await store.set("playlists", playlists);
-    _setPlaylists(playlists);
-  }
-
-  return [playlists, setPlaylists] as const;
-}
+import { usePlaylists } from "@/atoms/playlists";
 
 export function Sidebar() {
   const [playlists] = usePlaylists();
@@ -55,7 +34,7 @@ export function Sidebar() {
             {playlists.map((playlist) => (
               <li key={playlist.id}>
                 <NavLink href={`/playlist/${playlist.id}`}>
-                  <div className="flex items-center">
+                  <div className="flex items-center truncate">
                     <Playlist className="mr-2 h-4 w-4 shrink-0 fill-accent" />
                     <span className="truncate">{playlist.name}</span>
                   </div>
