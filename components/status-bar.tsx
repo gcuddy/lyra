@@ -35,7 +35,8 @@ export function StatusBar() {
         height: BOTTOM_BAR_HEIGHT,
       }}
     >
-      <div className="flex gap-2 flex-grow">
+      <div className="flex"> </div>
+      <div className="flex gap-2">
         <SongCount />
         <SongsSize />
         <SongsTime />
