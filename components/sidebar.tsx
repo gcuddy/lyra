@@ -1,5 +1,5 @@
 import NavLink from "./sidebar/link";
-import { Gear, MusicNotes, Queue, ListPlus } from "@phosphor-icons/react";
+import { Gear, MusicNotes, Queue, ListPlus, Playlist } from "@phosphor-icons/react";
 import { Button } from "./ui/button";
 import { Tooltip } from "./ui/tooltip";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogPortal, DialogOverlay, DialogClose, DialogFooter, DialogDescription } from "./ui/dialog"
@@ -8,6 +8,7 @@ import { Store } from "tauri-plugin-store-api";
 import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
 import { atom, useAtom } from "jotai";
+import { useRouter } from "next/router";
 
 const playlistsAtom = atom<Playlist[]>([]);
 
@@ -35,30 +36,35 @@ export function Sidebar() {
   return (
     <div style={{}} className="flex flex-col justify-between bg-sidebar w-64 pt-5 min-h-full relative gap-2.5 border-r border-sidebar-divider px-2.5 pb-2">
 
-      <ul className="grow flex flex-col pointer-events-auto">
-        <li>
-          <NavLink href="/">
-            <div className="flex items-center">
-              <MusicNotes
-                weight="fill"
-                className="mr-2 h-4 w-4 shrink-0 fill-accent"
-              />
-              <span className="truncate">Library</span>
-            </div>
-          </NavLink>
-          {playlists.length > 0 && (
-            <ul className="flex flex-col gap-1.5 ml-4">
-              {playlists.map((playlist) => (
-                <li key={playlist.id}>
-                  <NavLink href={`/playlist/${playlist.id}`}>
+      <div className="flex flex-col gap-2 grow pointer-events-auto">
+        <ul className="flex flex-col">
+          <li>
+            <NavLink href="/">
+              <div className="flex items-center">
+                <MusicNotes
+                  weight="fill"
+                  className="mr-2 h-4 w-4 shrink-0 fill-accent"
+                />
+                <span className="truncate">Library</span>
+              </div>
+            </NavLink>
+          </li>
+        </ul>
+        {playlists.length > 0 && (
+          <ul className="flex flex-col">
+            {playlists.map((playlist) => (
+              <li key={playlist.id}>
+                <NavLink href={`/playlist/${playlist.id}`}>
+                  <div className="flex items-center">
+                    <Playlist className="mr-2 h-4 w-4 shrink-0 fill-accent" />
                     <span className="truncate">{playlist.name}</span>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          )}
-        </li>
-      </ul>
+                  </div>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <div className="flex justify-between border-t border-sidebar-divider pointer-events-auto pt-3 pb-1">
         <div className="flex items-center gap-1">
           <Button href="/settings">
@@ -85,16 +91,19 @@ function NewPlaylist() {
   const [playlists, setPlaylists] = usePlaylists();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const router = useRouter();
 
   const createPlaylist = async (name: string) => {
     // const playlists = await store.get<Playlist[]>("playlists");
+    const id = nanoid();
     const newPlaylist = {
-      id: nanoid(),
+      id,
       name,
       songs: [],
     };
     // await store.set("playlists", [...(playlists ?? []), newPlaylist]);
-    setPlaylists([...playlists, newPlaylist]);
+    await setPlaylists([...playlists, newPlaylist]);
+    return id;
   };
 
   return (
@@ -112,9 +121,10 @@ function NewPlaylist() {
       <DialogContent>
         <form className="contents" onSubmit={(e) => {
           e.preventDefault();
-          console.log(value, "submitteD")
           if (!value) return;
-          createPlaylist(value);
+          createPlaylist(value).then((id) => {
+            router.push(`/playlist/${id}`)
+          })
           setValue("");
           setOpen(false);
         }}>
