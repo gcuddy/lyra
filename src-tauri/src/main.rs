@@ -61,6 +61,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_sql::Builder::default().build())
         .menu(menu)
         .on_menu_event(|event| match event.menu_item_id() {
             "openDirectory" => {
