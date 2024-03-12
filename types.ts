@@ -26,3 +26,9 @@ type Picture = {
   data: number[];
   mime_type: string;
 };
+
+type Playlist = {
+  id: string;
+  name: string;
+  songs: RawSong[];
+}

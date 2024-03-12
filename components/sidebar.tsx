@@ -2,6 +2,8 @@ import NavLink from "./sidebar/link";
 import { Gear, MusicNotes, Queue, ListPlus } from "@phosphor-icons/react";
 import { Button } from "./ui/button";
 import { Tooltip } from "./ui/tooltip";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogPortal, DialogOverlay, DialogClose, DialogFooter, DialogDescription } from "./ui/dialog"
+import { Input } from "./ui/input";
 
 export function Sidebar() {
   return (
@@ -35,15 +37,35 @@ export function Sidebar() {
             <span className="sr-only">Queue</span>
           </Button>
         </div>
+        <NewPlaylist />
+      </div>
+    </div>
+  )
+}
 
+function NewPlaylist() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
         <Button>
           <Tooltip label="New playlist">
             <ListPlus className="shrink-0" />
           </Tooltip>
           <span className="sr-only">New Playlist</span>
         </Button>
-
-      </div>
-    </div>
+      </DialogTrigger>
+      <DialogContent>
+        <form className="contents">
+          <DialogHeader>
+            <DialogTitle>New Playlist</DialogTitle>
+            <DialogDescription>Enter a name for your new playlist</DialogDescription>
+          </DialogHeader>
+          <Input className="p-2" />
+          <DialogFooter>
+            <Button variant="accent">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
