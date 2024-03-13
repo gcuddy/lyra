@@ -1,14 +1,29 @@
 import { Themes, useThemePreferences } from "@/atoms/preferences";
+import { NoSSR } from "@/components/no-ssr";
 import { Heading } from "@/components/settings/heading";
 import { HuePicker } from "@/components/settings/hue-picker";
 import Setting from "@/components/settings/setting";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectOption } from "@/components/ui/select";
 import { changeHueValue } from "@/hooks/useTheme";
+import { Spinner } from "@phosphor-icons/react";
+import { invoke } from "@tauri-apps/api/tauri";
+import { atom, useAtom } from "jotai";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Store } from "tauri-plugin-store-api";
 
 // million-ignore
-export default function Settings() {
+export default function Page() {
+	return (
+		<NoSSR>
+			<SettingsInner />
+		</NoSSR>
+	)
+}
+
+function SettingsInner() {
 	const router = useRouter();
 	const [themePrefs, setThemePrefs] = useThemePreferences();
 
@@ -70,9 +85,106 @@ export default function Settings() {
 							/>
 						</Setting>
 					</div>
+
 					<div className="block h-4 shrink-0" />
+
+					<Heading title="Extras" description="Connect to outside sources." />
+					<div className="flex flex-col gap-4 pointer-events-auto">
+						<LastFm />
+					</div>
 				</div>
 			</div>
 		</div>
 	);
+}
+
+
+type LastFmData = {
+	name: string;
+	key: string;
+}
+
+const lastFmAtom = atom<LastFmData | null>(null);
+
+function useLastfm() {
+	const store = new Store('extensions.json')
+	const [lastfm, _setLastfm] = useAtom(lastFmAtom);
+
+	useEffect(() => {
+		store.get<LastFmData>('lastfm').then((data) => {
+			_setLastfm(data)
+		})
+	}, [_setLastfm])
+
+	function setLastfm(data: LastFmData | null) {
+		if (data === null) {
+			store.delete('lastfm')
+			_setLastfm(null)
+			return
+		}
+		store.set('lastfm', data)
+		_setLastfm(data)
+	}
+
+	return [lastfm, setLastfm] as const
+}
+
+function LastFm() {
+
+
+	const [lastFm, setLastFm] = useLastfm();
+	const [loading, setLoading] = useState(false);
+	const [username, setUsername] = useState("");
+	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
+
+	async function handleSubmit() {
+		setError("")
+		setLoading(true)
+		try {
+			const response = await invoke<LastFmData>("lastfm_authenticate", { username, password })
+			setLastFm(response)
+		} catch {
+			console.error("Failed to authenticate with Last.fm")
+			setError("Failed to authenticate with Last.fm")
+		}
+		setLoading(false)
+	}
+
+	return (
+		<Setting
+			title="Last.fm"
+			mini
+			description="Connect your Last.fm account."
+		>
+			{lastFm ? (
+				<>
+					<p>Connected as {lastFm.name}</p>
+					<Button onClick={() => setLastFm(null)}>Disconnect</Button>
+				</>
+			) : (
+				<form onSubmit={(e) => {
+					e.preventDefault();
+					handleSubmit();
+				}}>
+					<label>Username
+						<Input
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
+						/>
+					</label>
+					<label>Password
+						<Input type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+					</label>
+					{error && <p className="text-red-500">{error}</p>}
+					<Button type="submit">Connect
+						<Spinner className={`ml-2 ${loading ? "animate-spin" : "hidden"}`} />
+					</Button>
+				</form>
+			)}
+		</Setting>
+	)
 }

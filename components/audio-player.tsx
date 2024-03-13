@@ -91,7 +91,7 @@ export default function AudioPlayer() {
 				onEnded={() => {
 					console.log("ended");
 					playNext();
-					// play next
+					// TODO: scrobble if requirements are met
 				}}
 				ref={audioRef}
 			/>

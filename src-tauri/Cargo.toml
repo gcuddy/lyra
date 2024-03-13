@@ -26,6 +26,7 @@ tauri = { version = "1.6.1", features = [ "macos-private-api", "protocol-all",
 ] }
 tauri-plugin-persisted-scope = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+rustfm-scrobble="1.1"
 audiotags = "0.4.1"
 bson = "2.7.0"
 logging_timer = "1.1.0"
@@ -37,6 +38,7 @@ cpal = "0.13.0"
 lofty = "0.18.2"
 specta = "1.0.5"
 tauri-specta = { version = "1.0.2", features = ["javascript", "typescript"] }
+dotenv = "0.15.0"
 
 [dependencies.tauri-plugin-sql]
 git = "https://github.com/tauri-apps/plugins-workspace"

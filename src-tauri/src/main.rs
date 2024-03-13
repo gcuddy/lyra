@@ -1,15 +1,19 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use dotenv;
 use lofty::{Accessor, AudioFile, ItemKey, ItemValue, Probe, TaggedFileExt};
 use nanoid::nanoid;
 use rayon::prelude::*;
+use rustfm_scrobble::{Scrobble, Scrobbler};
 use std::path::Path;
-use tauri::{AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu, window};
+use tauri::{window, AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu};
+use std::env;
 
 use logging_timer::time;
 
 fn main() {
+    dotenv::dotenv().ok();
     let open_directory = CustomMenuItem::new("openDirectory".to_string(), "Open Directory");
 
     let submenu = Submenu::new("File", Menu::new().add_item(open_directory));
@@ -115,9 +119,14 @@ fn main() {
             // });
             Ok(())
         })
-        .invoke_handler(
-            tauri::generate_handler![greet, read_music_file, get_album_cover, process_music_files, toggle_inspector_text]
-        )
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            read_music_file,
+            get_album_cover,
+            process_music_files,
+            toggle_inspector_text,
+            lastfm_authenticate
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -170,18 +179,16 @@ async fn read_music_file(path: &str) -> Option<Song> {
         return None;
     }
 
-
     let file_md = match _path.metadata() {
         Ok(md) => md,
         Err(_) => return None,
     };
 
-    let tagged_file =
-        match Probe::open(_path) {
-            // TODO: clean up this .expect()
-            Ok(tagged_file) => tagged_file.read().expect("Failed to read file"),
-            Err(_) => return None,
-        };
+    let tagged_file = match Probe::open(_path) {
+        // TODO: clean up this .expect()
+        Ok(tagged_file) => tagged_file.read().expect("Failed to read file"),
+        Err(_) => return None,
+    };
 
     // TODO: iterate through tags
     let tag = match tagged_file.primary_tag() {
@@ -268,12 +275,11 @@ fn get_album_cover(path: &str) -> Option<Picture> {
         return None;
     }
 
-    let tagged_file =
-        match Probe::open(_path) {
-            // TODO: clean up this .expect()
-            Ok(tagged_file) => tagged_file.read().expect("Failed to read file"),
-            Err(_) => return None,
-        };
+    let tagged_file = match Probe::open(_path) {
+        // TODO: clean up this .expect()
+        Ok(tagged_file) => tagged_file.read().expect("Failed to read file"),
+        Err(_) => return None,
+    };
 
     let tag = match tagged_file.primary_tag() {
         Some(tag) => tag,
@@ -296,12 +302,43 @@ fn get_album_cover(path: &str) -> Option<Picture> {
 }
 // TODO: should we play audio files thru rust?
 
-
 #[tauri::command]
 async fn toggle_inspector_text(window: tauri::Window, show: bool) {
-    window.menu_handle().get_item("inspector").set_title(if show {
-        "Hide Inspector"
-    } else {
-        "Show Inspector"
-    }).ok();
+    window
+        .menu_handle()
+        .get_item("inspector")
+        .set_title(if show {
+            "Hide Inspector"
+        } else {
+            "Show Inspector"
+        })
+        .ok();
 }
+
+#[derive(serde::Serialize, Debug)]
+struct LastfmAuthResponse {
+    name: String,
+    key: String,
+}
+
+#[tauri::command]
+async fn lastfm_authenticate(username: String, password: String) -> Result<LastfmAuthResponse, String>{
+    let mut scrobbler = Scrobbler::new(env::var("LASTFM_KEY").unwrap().as_str(), env::var("LASTFM_SECRET").unwrap().as_str());
+    let response = scrobbler.authenticate_with_password(username.as_str(), password.as_str()).map_err(|e| e.to_string())?;
+    Ok(LastfmAuthResponse {
+        name: response.name,
+        key: response.key,
+    })
+}
+
+#[tauri::command]
+async fn lastfm_scrobble(session_key: String, artist: String, track: String, album: String) -> Result<(), String>{
+    let mut scrobbler = Scrobbler::new(env::var("LASTFM_KEY").unwrap().as_str(), env::var("LASTFM_SECRET").unwrap().as_str());
+    let song = Scrobble::new(artist.as_str(), track.as_str(), album.as_str());
+    let auth_token = scrobbler.authenticate_with_token(&session_key);
+    scrobbler.scrobble(&song);
+    // TODO: handle error
+    //
+    Ok(())
+}
+
