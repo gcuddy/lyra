@@ -14,14 +14,14 @@ import {
 	SkipForward,
 	XCircle,
 } from "@phosphor-icons/react";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { convertFileSrc, invoke } from "@tauri-apps/api/tauri";
 
 import { queueAtom } from "@/atoms/queue";
 import { useOperatingSystem } from "@/hooks/useOperatingSystem";
 import { ModifierKeys, keybindForOs } from "@/lib/utils";
 import { listen } from "@tauri-apps/api/event";
 import { format } from "date-fns";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { SearchIcon, Volume1, Volume2 } from "lucide-react";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
@@ -30,6 +30,7 @@ import { Input } from "../ui/input";
 import { Seeker } from "../ui/seeker";
 import { Shortcut } from "../ui/shortcut";
 import { Slider } from "../ui/slider";
+import { useLastfm } from "@/atoms/extensions";
 
 const artistOrAlbumAtom = atomWithStorage<"artist" | "album">(
 	"artistOrAlbum",
@@ -41,11 +42,16 @@ function useArtistOrAlbum() {
 }
 
 const volumeAtom = atomWithStorage("volume", 1);
+const shouldScrobbleAtom = atom(false);
+const timeListenedAtom = atom(0);
 
 export default function TopBar() {
 	const [loadedSong, setLoadedSong] = useLoadedSong();
 	const [playing, setPlaying] = usePlaying();
 	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const setTimeListenedAtom = useSetAtom(timeListenedAtom);
+	const shouldScrobble = useAtomValue(shouldScrobbleAtom);
+	const [lastFm] = useLastfm();
 
 	const songHistory = useAtomValue(songHistoryAtom);
 	const queue = useAtomValue(queueAtom);
@@ -74,6 +80,7 @@ export default function TopBar() {
 		console.log("loaded song changed", loadedSong);
 		if (!loadedSong) return;
 		const src = convertFileSrc(loadedSong.path);
+		setTimeListenedAtom(0);
 		if (audioRef.current) {
 			console.log("setting src", src);
 			audioRef.current.pause();
@@ -200,7 +207,20 @@ export default function TopBar() {
 									? loadedSong.artist
 									: loadedSong.album_title}
 							</button>
-							<TimeDisplay audioRef={audioRef} />
+							<TimeDisplay audioRef={audioRef} onEnded={() => {
+								console.log({ shouldScrobble, lastFm })
+								if (shouldScrobble && lastFm) {
+									// TODO: lastfm_scrobble
+									invoke("lastfm_scrobble", {
+										artist: loadedSong.artist,
+										track: loadedSong.title,
+										album: loadedSong.album_title,
+										sessionKey: lastFm.key
+									}).then(() => {
+										console.log("scrobbled song")
+									})
+								}
+							}} />
 						</div>
 					)}
 				</div>
@@ -297,13 +317,30 @@ function SearchBar() {
 
 function TimeDisplay({
 	audioRef,
+	onEnded
 }: {
 	audioRef: RefObject<HTMLAudioElement>;
+	onEnded?: () => void;
 }) {
 	const [time, setTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [showTimeRemaining, setShowTimeRemaining] = useState(false);
 	const [, playNext] = useAtom(playNextFromQueue);
+	const [timeListened, setTimeListened] = useAtom(timeListenedAtom);
+	const setShouldScrobble = useSetAtom(shouldScrobbleAtom);
+
+	useEffect(() => {
+		// Rules of scrobbling: greater than 30 seconds, and listaened to at least half or 4 minutes (whichever is less)
+		if (duration <= 30) {
+			setShouldScrobble(false);
+			return;
+		}
+		if (timeListened >= duration / 2 || timeListened >= 4 * 60) {
+			setShouldScrobble(true);
+		} else {
+			setShouldScrobble(false);
+		}
+	}, [duration, timeListened])
 
 	const [isGettingNextSong, setIsGettingNextSong] = useState(false);
 
@@ -321,10 +358,16 @@ function TimeDisplay({
 		const audio = audioRef.current;
 		console.log({ audio });
 		function timeupdate() {
+			const currentTime = audio.currentTime;
+			const isPlusOneSecondElapsed = currentTime - time === 1;
+			if (isPlusOneSecondElapsed) {
+				setTimeListened((prev) => prev + 1);
+			}
 			setTime(audio.currentTime);
 			if (audio.ended) {
 				// play next song
 				console.log("ended");
+				onEnded?.();
 				setNextSong();
 			}
 		}

@@ -1,3 +1,4 @@
+import { LastFmData, useLastfm } from "@/atoms/extensions";
 import { Themes, useThemePreferences } from "@/atoms/preferences";
 import { NoSSR } from "@/components/no-ssr";
 import { Heading } from "@/components/settings/heading";
@@ -9,10 +10,8 @@ import { Select, SelectOption } from "@/components/ui/select";
 import { changeHueValue } from "@/hooks/useTheme";
 import { Spinner } from "@phosphor-icons/react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { atom, useAtom } from "jotai";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Store } from "tauri-plugin-store-api";
 
 // million-ignore
 export default function Page() {
@@ -99,38 +98,7 @@ function SettingsInner() {
 }
 
 
-type LastFmData = {
-	name: string;
-	key: string;
-}
-
-const lastFmAtom = atom<LastFmData | null>(null);
-
-function useLastfm() {
-	const store = new Store('extensions.json')
-	const [lastfm, _setLastfm] = useAtom(lastFmAtom);
-
-	useEffect(() => {
-		store.get<LastFmData>('lastfm').then((data) => {
-			_setLastfm(data)
-		})
-	}, [_setLastfm])
-
-	function setLastfm(data: LastFmData | null) {
-		if (data === null) {
-			store.delete('lastfm')
-			_setLastfm(null)
-			return
-		}
-		store.set('lastfm', data)
-		_setLastfm(data)
-	}
-
-	return [lastfm, setLastfm] as const
-}
-
 function LastFm() {
-
 
 	const [lastFm, setLastFm] = useLastfm();
 	const [loading, setLoading] = useState(false);
