@@ -8,7 +8,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { emit } from "@tauri-apps/api/event";
 import clsx from "clsx";
 import { produce } from "immer";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { Atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { For } from "million/react";
 import {
 	memo,
@@ -23,10 +23,19 @@ import { BOTTOM_BAR_HEIGHT, BottomBar } from "./bottom-bar";
 import { INSPECTOR_WIDTH, Inspector } from "./inspector";
 import { ContextMenu } from "./ui/context-menu";
 import useResizeObserver from "use-resize-observer";
+import { playlistsAtomsAtom, usePlaylists } from "@/atoms/playlists";
+import { w } from "million/dist/shared/million.50256fe7.mjs";
 
 
 export const TABLE_PADDING_X = 16;
 export const TABLE_PADDING_Y = 12;
+const padding = {
+	top: 12,
+	bottom: 12,
+	left: 16,
+	right: 16,
+};
+
 export default function List() {
 	const tableRef = useRef<HTMLDivElement>(null);
 	const [listOffset, setListOffset] = useState(0);
@@ -48,12 +57,6 @@ export default function List() {
 	//   or rows.length? does it matter?
 	const count = rows?.length || songs?.length || 0;
 
-	const padding = {
-		top: 12,
-		bottom: 12,
-		left: 16,
-		right: 16,
-	};
 	//   const [top, setTop] = useState(256);
 
 	const rowVirtualizer = useVirtualizer({
@@ -195,7 +198,6 @@ export default function List() {
 								<ContextMenu.CheckboxItem
 									key={column.id}
 									checked={column.getIsVisible()}
-									// TODO: this doesn't immediately trigger virtualizer to update
 									onSelect={column.getToggleVisibilityHandler()}
 									label={
 										typeof column.columnDef.header === 'string'
@@ -235,32 +237,42 @@ export default function List() {
 												}px)`,
 										}}
 									>
-										<div
-											className={cn(
-												"absolute inset-0 w-max rounded-md border",
-												virtualItem.index % 2 === 0 && "bg-app-darkBox",
-												selected
-													? "border-accent !bg-accent/10"
-													: "border-transparent",
-											)}
-											onClick={() => {
-												setSelectedSong(row.original);
-											}}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													setLoadedSong(row.original);
-												}
-											}}
-											onDoubleClick={() => {
-												setLoadedSong(row.original);
-											}}
-										>
-											<LibrarySong
-												row={row}
-												paddingLeft={padding.left}
-												paddingRight={padding.right}
+										<ContextMenu.Root
+
+											trigger={
+
+												<div
+													className={cn(
+														"absolute inset-0 w-fit rounded-md border",
+														virtualItem.index % 2 === 0 && "bg-app-darkBox",
+														selected
+															? "border-accent !bg-accent/10"
+															: "border-transparent",
+													)}
+													onClick={() => {
+														setSelectedSong(row.original);
+													}}
+													onKeyDown={(e) => {
+														if (e.key === "Enter") {
+															setLoadedSong(row.original);
+														}
+													}}
+													onDoubleClick={() => {
+														setLoadedSong(row.original);
+													}}
+												>
+													<ListSong
+														row={row}
+														paddingLeft={padding.left}
+														paddingRight={padding.right}
+													/>
+												</div>
+											}>
+
+											<SongContextMenu
+												song={row.original}
 											/>
-										</div>
+										</ContextMenu.Root>
 									</div>
 								);
 							}}
@@ -281,7 +293,7 @@ type LibrarySongProps = {
 	paddingRight: number;
 };
 
-const LibrarySong = ({ row }: LibrarySongProps) => {
+const ListSong = ({ row }: LibrarySongProps) => {
 	return (
 		<>
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
@@ -345,3 +357,87 @@ const LibrarySongMemoized = memo(({ row }: LibrarySongProps) => {
 	// return <>hello</>;
 });
 LibrarySongMemoized.displayName = "LibrarySong";
+
+function TableRow({
+	row,
+	selected
+}: {
+	row: Row<RawSong>;
+	selected: boolean;
+}) {
+	const setSelectedSong = useSetAtom(selectedSongAtom);
+	const setLoadedSong = useSetAtom(setLoadedSongAndUpdateQueue);
+	return (
+		<div
+			className={cn(
+				"absolute inset-0 w-max rounded-md border",
+				row.index % 2 === 0 && "bg-app-darkBox",
+				selected
+					? "border-accent !bg-accent/10"
+					: "border-transparent",
+			)}
+			onClick={() => {
+				setSelectedSong(row.original);
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					setLoadedSong(row.original);
+				}
+			}}
+			onDoubleClick={() => {
+				setLoadedSong(row.original);
+			}}
+		>
+			<ListSong
+				row={row}
+				paddingLeft={padding.left}
+				paddingRight={padding.right}
+			/>
+		</div>
+	)
+}
+
+
+function SongContextMenu({ song }: { song: RawSong }) {
+	const [playlistAtoms] = useAtom(playlistsAtomsAtom)
+	return (
+		<ContextMenu.SubMenu label="Add to playlist...">
+			{playlistAtoms.map((playlistAtom) => {
+				return (
+					<>
+						<SongContextMenuPlaylistItem song={song} key={`${playlistAtom}`} playlistAtom={playlistAtom} />
+					</>
+				)
+			})}
+		</ContextMenu.SubMenu>
+	);
+}
+
+function SongContextMenuPlaylistItem({ playlistAtom, song }: { playlistAtom: PrimitiveAtom<Playlist>, song: RawSong }) {
+	const [playlists, _setPlaylists] = usePlaylists();
+	const [playlist] = useAtom(playlistAtom);
+
+	function setPlaylist(cb: (p: Playlist) => Playlist) {
+		_setPlaylists(playlists.map(p => {
+			if (p.id === playlist.id) {
+				return cb(p);
+			}
+			return p;
+		}))
+	}
+
+	return (
+		<>
+			<ContextMenu.Item onSelect={() => {
+				setPlaylist(p => {
+					return {
+						...p,
+						songs: [...p.songs, song]
+					}
+				})
+			}} key={`${playlistAtom}`}>
+				{playlist.name}
+			</ContextMenu.Item>
+		</>
+	)
+}

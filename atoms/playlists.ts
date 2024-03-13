@@ -1,4 +1,5 @@
 import { atom, useAtom } from "jotai";
+import { splitAtom } from "jotai/utils";
 import { useEffect } from "react";
 import { Store } from "tauri-plugin-store-api";
 
@@ -22,3 +23,4 @@ export function usePlaylists() {
 	return [playlists, setPlaylists] as const;
 }
 
+export const playlistsAtomsAtom = splitAtom(playlistsAtom);

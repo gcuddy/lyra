@@ -11,7 +11,7 @@ export default function Page() {
 	const playlist = useMemo(() => playlists.find((playlist) => playlist.id === router.query.playlist), [playlists, router.query.playlist]);
 	const setSongs = useSetAtom(songsAtom);
 	if (!playlist) {
-		router.replace('/');
+		// router.replace('/');
 	}
 	// TODO: need a way to verify songs exist
 	setSongs(playlist?.songs || [])

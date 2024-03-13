@@ -28,7 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 			}
 		}
 		getInitialDirectoryPath();
-	}, [setDirectoryPath]);
+	}, [setDirectoryPath, queryClient]);
 
 	const router = useRouter();
 
