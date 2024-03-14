@@ -11,7 +11,6 @@ function isAudioFile(filename: string): boolean {
 }
 
 function parseMusicFiles(dir: FileEntry[], acc: string[] = []) {
-	console.log('parsing music files')
 	for (let i = 0; i < dir.length; ++i) {
 		const file = dir[i];
 		if (file.children) {

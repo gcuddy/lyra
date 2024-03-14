@@ -6,14 +6,25 @@ use lofty::{Accessor, AudioFile, ItemKey, ItemValue, Probe, TaggedFileExt};
 use nanoid::nanoid;
 use rayon::prelude::*;
 use rustfm_scrobble::{Scrobble, Scrobbler};
+use std::env;
 use std::path::Path;
 use tauri::{window, AboutMetadata, CustomMenuItem, Manager, Menu, MenuItem, Submenu};
-use std::env;
 
 use logging_timer::time;
 
 fn main() {
-    dotenv::dotenv().ok();
+    // dotenv::load().ok();
+    if cfg!(debug_assertions) {
+        dotenv::from_filename("../../.env.development").ok();
+    } else {
+        let prod_env = include_str!("../../.env.production");
+        println!("prod_env: {}", prod_env);
+        let result = dotenv::from_read(prod_env.as_bytes()).unwrap();
+        result.load();
+    }
+    for (key, value) in dotenv::vars() {
+        println!("{}: {}", key, value);
+    }
     let open_directory = CustomMenuItem::new("openDirectory".to_string(), "Open Directory");
 
     let submenu = Submenu::new("File", Menu::new().add_item(open_directory));
@@ -125,7 +136,9 @@ fn main() {
             get_album_cover,
             process_music_files,
             toggle_inspector_text,
-            lastfm_authenticate
+            lastfm_authenticate,
+            lastfm_scrobble,
+            get_env_values
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -134,6 +147,15 @@ fn main() {
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
+}
+
+#[tauri::command]
+fn get_env_values() -> Vec<String> {
+    let mut values = Vec::new();
+    for (key, value) in env::vars() {
+        values.push(format!("{}: {}", key, value));
+    }
+    values
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -322,9 +344,17 @@ struct LastfmAuthResponse {
 }
 
 #[tauri::command]
-async fn lastfm_authenticate(username: String, password: String) -> Result<LastfmAuthResponse, String>{
-    let mut scrobbler = Scrobbler::new(env::var("LASTFM_KEY").unwrap().as_str(), env::var("LASTFM_SECRET").unwrap().as_str());
-    let response = scrobbler.authenticate_with_password(username.as_str(), password.as_str()).map_err(|e| e.to_string())?;
+async fn lastfm_authenticate(
+    username: String,
+    password: String,
+) -> Result<LastfmAuthResponse, String> {
+    let mut scrobbler = Scrobbler::new(
+        env::var("LASTFM_KEY").unwrap().as_str(),
+        env::var("LASTFM_SECRET").unwrap().as_str(),
+    );
+    let response = scrobbler
+        .authenticate_with_password(username.as_str(), password.as_str())
+        .map_err(|e| e.to_string())?;
     Ok(LastfmAuthResponse {
         name: response.name,
         key: response.key,
@@ -332,8 +362,18 @@ async fn lastfm_authenticate(username: String, password: String) -> Result<Lastf
 }
 
 #[tauri::command]
-async fn lastfm_scrobble(session_key: String, artist: String, track: String, album: String) -> Result<(), String>{
-    let mut scrobbler = Scrobbler::new(env::var("LASTFM_KEY").unwrap().as_str(), env::var("LASTFM_SECRET").unwrap().as_str());
+async fn lastfm_scrobble(
+    session_key: String,
+    artist: String,
+    track: String,
+    album: String,
+    done: bool
+) -> Result<(), String> {
+    println!("scrobbling: {} - {} - {}", artist, track, album);
+    let mut scrobbler = Scrobbler::new(
+        env::var("LASTFM_KEY").unwrap().as_str(),
+        env::var("LASTFM_SECRET").unwrap().as_str(),
+    );
     let song = Scrobble::new(artist.as_str(), track.as_str(), album.as_str());
     let auth_token = scrobbler.authenticate_with_token(&session_key);
     scrobbler.scrobble(&song);
@@ -341,4 +381,3 @@ async fn lastfm_scrobble(session_key: String, artist: String, track: String, alb
     //
     Ok(())
 }
-

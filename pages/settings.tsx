@@ -109,8 +109,10 @@ function LastFm() {
 	async function handleSubmit() {
 		setError("")
 		setLoading(true)
+		console.log('sumbitting...')
 		try {
 			const response = await invoke<LastFmData>("lastfm_authenticate", { username, password })
+			console.log({ response })
 			setLastFm(response)
 		} catch {
 			console.error("Failed to authenticate with Last.fm")

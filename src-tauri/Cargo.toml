@@ -38,7 +38,7 @@ cpal = "0.13.0"
 lofty = "0.18.2"
 specta = "1.0.5"
 tauri-specta = { version = "1.0.2", features = ["javascript", "typescript"] }
-dotenv = "0.15.0"
+dotenvs = "0.1.0"
 
 [dependencies.tauri-plugin-sql]
 git = "https://github.com/tauri-apps/plugins-workspace"

@@ -2,6 +2,7 @@ import { useDirectoryPath } from "@/atoms/paths";
 import { useQueryClient } from "@tanstack/react-query";
 import { open } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useEffect, useMemo } from "react";
 import { Store } from "tauri-plugin-store-api";
@@ -11,6 +12,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 	const queryClient = useQueryClient();
 
 	const store = useMemo(() => new Store(".settings.json"), []);
+
+
+	useEffect(() => {
+		console.log("Logging env variables from Rust");
+		invoke("get_env_values").then(console.log)
+	}, [])
 
 	useEffect(() => {
 		async function getInitialDirectoryPath() {
